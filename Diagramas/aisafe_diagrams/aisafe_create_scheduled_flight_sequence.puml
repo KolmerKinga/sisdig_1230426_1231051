@@ -1,0 +1,58 @@
+@startuml
+' Sources: PSOFT US106a, operational constraints and US212; SIDIS segregation;
+' FlightController, RouteService, HangarController, AirportController,
+' MaintenanceController, Certification and arq_corrigida.puml.
+' This is a target distributed workflow, not a trace of the existing monolith.
+' Current RouteService does not check capacity or query Maintenance directly.
+' AircraftResponse contains meanRange, but no complete range/capacity contract.
+' Airport Certification does not identify an AircraftModel (US106a gap).
+title AISafe - Create Scheduled Flight\nProposed HTTP/REST coordination
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowFontSize 12
+skinparam NoteBackgroundColor white
+skinparam sequenceMessageAlign center
+hide footbox
+autonumber
+
+actor "Client" as Client
+participant "Route / Flight\nOperations" as Route
+participant "Aircraft\nManagement" as Aircraft
+participant "Airport\nManagement" as Airport
+participant "Maintenance\nManagement" as Maintenance
+
+Client -> Route : POST /api/flights/scheduled\nrouteId, aircraftRegistrationNumber,\nscheduledDeparture, scheduledArrival
+activate Route
+Route -> Route : Load local Route and scheduling requirements
+Route -> Aircraft : HTTP/REST - Validate aircraft\nExistence, operational status, range, capacity
+Aircraft --> Route : Aircraft information / validation outcome
+
+Route -> Airport : GET /api/airports/{iataCode}\nOrigin airport
+Airport --> Route : Origin details / lookup outcome
+Route -> Airport : GET /api/airports/{iataCode}\nDestination airport
+Airport --> Route : Destination details / lookup outcome
+Route -> Route : Check airport status and certifications\nModel-to-airport eligibility: TBD
+
+Route -> Maintenance : HTTP/REST - Check maintenance status\nAircraft maintenance-related availability
+Maintenance --> Route : Maintenance status / availability outcome
+
+Route -> Route : Evaluate collected information\nCheck range, capacity and aircraft status;\nroute active, valid times, no overlapping flights
+alt All validations satisfied
+  Route -> Route : Create and save Flight (ScheduledFlight)\nUpdate local RouteHistory
+  Route --> Client : HTTP 201 Created\nScheduled flight information
+else A validation fails
+  Route --> Client : Validation failure with reason\nHTTP 409 for business-rule conflicts
+end
+deactivate Route
+
+legend bottom left
+  POST and airport GET paths exist in PSOFT; remote calls are proposed.
+  Aircraft GET /api/hangar/aircraft/{registrationNumber} exists,
+  but the full range/capacity contract is TBD: validation is conceptual.
+  Maintenance GET /api/maintenance/records?aircraft={registrationNumber}
+  exists; the availability-check contract is TBD.
+  Each service accesses only its own data and repositories.
+endlegend
+@enduml

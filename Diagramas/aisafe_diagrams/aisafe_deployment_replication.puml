@@ -1,0 +1,83 @@
+@startuml
+' Sources: ZIP pom.xml, application.properties, application-dev.properties,
+' package/controller/repository analysis; SIDIS assignment, PL2, PL3;
+' output/arq_corrigida.puml.
+' Existing code: one Maven project and one Spring Boot application, not four
+' separately deployed services. Packages Aircraft/AircraftCatalog -> Aircraft;
+' Airport -> Airport; Route/Flight -> Route; Maintenance -> Maintenance.
+' The ZIP contains no Dockerfile/Compose configuration or inter-service client.
+' H2 per replica is an initial proposal using the existing database technology.
+' Hosts, eight future ports, peer URLs, separate builds and replica profiles TBD.
+title AISafe - Deployment and Replication\nProposed decomposition of the PSOFT monolith
+left to right direction
+skinparam monochrome true
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam packageStyle rectangle
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowFontSize 12
+skinparam NoteBackgroundColor white
+
+node "Route / Flight Operations" as Route {
+  node "Replica A\nPort: TBD" as RA
+  node "Replica B\nPort: TBD" as RB
+  database "H2 local store A\nIndependent JVM" as RDA
+  database "H2 local store B\nIndependent JVM" as RDB
+  RA <--> RB : Peer HTTP GET
+  RA --> RDA : JPA
+  RB --> RDB : JPA
+}
+node "Aircraft Management" as Aircraft {
+  node "Replica A\nPort: TBD" as AA
+  node "Replica B\nPort: TBD" as AB
+  database "H2 local store A\nIndependent JVM" as ADA
+  database "H2 local store B\nIndependent JVM" as ADB
+  AA <--> AB : Peer HTTP GET
+  AA --> ADA : JPA
+  AB --> ADB : JPA
+}
+node "Airport Management" as Airport {
+  node "Replica A\nPort: TBD" as PA
+  node "Replica B\nPort: TBD" as PB
+  database "H2 local store A\nIndependent JVM" as PDA
+  database "H2 local store B\nIndependent JVM" as PDB
+  PA <--> PB : Peer HTTP GET
+  PA --> PDA : JPA
+  PB --> PDB : JPA
+}
+node "Maintenance Management" as Maintenance {
+  node "Replica A\nPort: TBD" as MA
+  node "Replica B\nPort: TBD" as MB
+  database "H2 local store A\nIndependent JVM" as MDA
+  database "H2 local store B\nIndependent JVM" as MDB
+  MA <--> MB : Peer HTTP GET
+  MA --> MDA : JPA
+  MB --> MDB : JPA
+}
+
+Route --> Aircraft : HTTP/REST\nAircraft checks / metrics
+Route --> Airport : HTTP/REST\nAirport checks
+Route --> Maintenance : HTTP/REST\nMaintenance checks
+Maintenance --> Aircraft : HTTP/REST\nAircraft lookup
+Aircraft ..> Route : HTTP/REST\nQueries / statistics
+Airport ..> Route : HTTP/REST\nQueries / statistics
+
+legend bottom left
+  Verified PSOFT baseline:
+  Java 17; Spring Boot 3.3.5; Spring Web, Data JPA and Security; Maven.
+  One project/application; current monolith port: 8081.
+  H2 in memory: jdbc:h2:mem:testdb; default profile: dev.
+  application-dev.properties uses ddl-auto=create; no Docker configuration.
+
+  Proposed deployment:
+  Each replica is a separate Spring Boot process with its own H2 store.
+  All eight service ports, host placement and replica profiles: TBD.
+  Use distinct ports when replicas share a host; no shared database.
+  Service-level arrows summarise calls between the respective replicas.
+  Peer arrows apply only within the same service; forwarding is not write sync.
+  Write synchronisation, conflict handling and data redundancy: TBD.
+  Inter-service authentication, TLS, access control and audit are required;
+  their distributed configuration remains TBD. No message queues.
+endlegend
+@enduml

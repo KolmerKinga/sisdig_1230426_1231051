@@ -1,0 +1,143 @@
+@startuml
+title AISafe Flight Management System\nProposed Distributed Architecture (4 services)
+
+left to right direction
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam packageStyle rectangle
+skinparam defaultTextAlignment center
+
+actor "Client / Frontend" as Client
+
+package "Aircraft Management" as AircraftPkg {
+  component "Aircraft Service\n\nMain concepts owned:\n- AircraftModel\n- Aircraft\n- AircraftAvailability\n- AircraftCertification\n\n2+ replicas" as Aircraft
+  database "Independent local store\nper replica" as AircraftDB
+  Aircraft --> AircraftDB
+}
+
+package "Airport Management" as AirportPkg {
+  component "Airport Service\n\nMain concepts owned:\n- Airport\n- Runway\n- Facilities\n- Certification\n- AirportStatus\n\n2+ replicas" as Airport
+  database "Independent local store\nper replica" as AirportDB
+  Airport --> AirportDB
+}
+
+package "Route / Flight Operations" as RoutePkg {
+  component "Route / Flight Ops Service\n\nMain concepts owned:\n- Route\n- RouteHistory\n- Flight\n\n2+ replicas" as Route
+  database "Independent local store\nper replica" as RouteDB
+  Route --> RouteDB
+}
+
+package "Maintenance Management" as MaintenancePkg {
+  component "Maintenance Service\n\nMain concepts owned:\n- MaintenanceTemplate\n- MaintenanceRecord\n\n2+ replicas" as Maintenance
+  database "Independent local store\nper replica" as MaintenanceDB
+  Maintenance --> MaintenanceDB
+}
+
+Client --> Aircraft : HTTP/REST
+Client --> Airport : HTTP/REST
+Client --> Route : HTTP/REST
+Client --> Maintenance : HTTP/REST
+
+Route --> Aircraft : HTTP/REST\naircraft lookup, status,\nrange and capacity;\nupdate flight metrics
+Route --> Airport : HTTP/REST\nairport lookup, status\nand airport certifications
+Route --> Maintenance : HTTP/REST\nmaintenance status
+Maintenance --> Aircraft : HTTP/REST\naircraft lookup,\nmodel and flight hours
+
+Aircraft --> Route : HTTP/REST\ncompatible routes,\nflight queries and statistics
+Airport --> Route : HTTP/REST\nairport routes\nand route statistics
+
+rectangle "Replica collaboration pattern\n(applies inside every service)" as Replication {
+  component "Replica A" as RA
+  component "Replica B" as RB
+  database "Local Store A" as RDBA
+  database "Local Store B" as RDBB
+
+  RA <--> RB : peer-to-peer\nHTTP GET forwarding
+  RA --> RDBA
+  RB --> RDBB
+}
+
+note bottom of Replication
+Each replica first checks its local data.
+If the required data is missing or incomplete,
+it queries peers and returns a coherent response.
+Distributed collections may require aggregation
+of local and peer results, with duplicate handling.
+
+Forwarding must handle timeouts and unavailable
+peers, and prevent circular forwarding.
+
+GET forwarding retrieves data from peers.
+It does not, by itself, synchronize writes
+or guarantee eventual consistency.
+
+Consistency target: eventual consistency.
+Write synchronization, conflict resolution and
+data redundancy must be defined separately.
+end note
+
+note bottom of Route
+Route / Flight Operations owns routes and flights
+and coordinates cross-domain checks.
+Flight is the existing PSOFT entity used
+to represent scheduled flight operations.
+
+References to data owned by other services
+must use identifiers and HTTP/REST APIs,
+instead of cross-service JPA relationships
+or direct repository/database access.
+end note
+
+note as ArchitecturalRules
+Architectural rules:
+1. Clear business-domain ownership.
+2. No shared database between services.
+3. Independent local data store per replica.
+4. Inter-service communication via HTTP/REST.
+5. At least two replicas per service.
+6. Peer-to-peer GET forwarding and response aggregation.
+7. Inter-service authentication, HTTPS/TLS, RBAC and audit logging.
+8. No event-based communication or message queues in Assignment 1.
+
+The stores inside the service packages summarize
+the per-replica storage shown in the replica pattern.
+The arrows describe the proposed distributed APIs,
+including queries needed to preserve current endpoints.
+They do not imply that these APIs are already implemented.
+end note
+
+note as DDDExplanation
+DDD - Domain-Driven Design
+
+The proposed architecture groups related business responsibilities
+into four Bounded Contexts with explicit data ownership.
+
+- Aircraft Management:
+  Owns aircraft models, aircraft instances, aircraft availability
+  and aircraft certifications.
+
+- Airport Management:
+  Owns airports, runways, facilities, airport status
+  and airport certifications (Certification).
+
+- Route / Flight Operations:
+  Owns routes, route history and flights.
+
+- Maintenance Management:
+  Owns maintenance templates and maintenance records.
+
+AircraftCertification and Certification are distinct PSOFT classes.
+The current airport Certification entity does not identify an aircraft model;
+model-to-airport eligibility must be aligned with the original requirements.
+
+Each context owns its business logic and data.
+Cross-context interactions use well-defined HTTP/REST APIs.
+The concept lists show the main concepts, not every class.
+
+The four-service division is based on business responsibilities,
+data ownership and clear domain boundaries.
+Having four team members supports this organization,
+but was not the main criterion for defining the services.
+end note
+
+@enduml

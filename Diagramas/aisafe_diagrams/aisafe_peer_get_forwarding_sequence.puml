@@ -1,0 +1,63 @@
+@startuml
+' Sources: SIDIS assignment replication requirement and LETI-SIDIS-PL3:
+' local lookup first, at least two instances, independent stores, HTTP GET,
+' circular-forwarding protection, timeouts and graceful error handling.
+' Example path comes from PSOFT HangarController; forwarding is not implemented.
+' PL3's simplified example returns 404 when all peers fail. Final error policy
+' for unavailability is left TBD rather than claiming verified absence.
+title AISafe - Peer-to-peer GET Forwarding\nAircraft Management example
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowFontSize 12
+skinparam NoteBackgroundColor white
+skinparam sequenceMessageAlign center
+hide footbox
+autonumber
+
+actor "Client" as Client
+participant "Service Replica A" as A
+database "Local Store A" as StoreA
+participant "Service Replica B" as B
+database "Local Store B" as StoreB
+
+Client -> A : GET /api/hangar/aircraft/{registrationNumber}
+activate A
+A -> StoreA : Find aircraft by registrationNumber
+StoreA --> A : Local lookup result
+
+alt A - Data found locally
+  A --> Client : HTTP 200 OK\nLocal aircraft data
+else B / C - Data not found locally
+  A -> B : HTTP GET - same resource\nForwarding control: mechanism TBD
+  alt B - Peer reachable
+    B -> StoreB : Find aircraft by registrationNumber
+    StoreB --> B : Peer lookup result
+    alt B - Data found in peer
+      B --> A : HTTP 200 OK\nAircraft data
+      A --> Client : HTTP 200 OK\nAircraft data returned by peer
+    else C - Data also absent in peer
+      B --> A : HTTP 404 Not Found
+      A --> Client : HTTP 404 Not Found
+    end
+  else C - Peer unavailable or timeout
+    note over A, B
+      No successful peer response within the timeout.
+      Handle failure without indefinite blocking.
+    end note
+    A --> Client : Graceful failure response\nHTTP status policy: TBD
+  end
+end
+deactivate A
+
+legend bottom left
+  Prevent circular forwarding; exclude self and track request hops/visited peers
+  if needed. Header names, limits and timeout values are TBD.
+  PL3 illustrates a 404 fallback even when a peer is down;
+  the final policy must distinguish missing data from unavailability.
+  This example retrieves one resource. Collection queries may aggregate
+  local and peer results into a coherent response, handling duplicates.
+  GET forwarding alone does not replicate writes or ensure eventual consistency.
+endlegend
+@enduml

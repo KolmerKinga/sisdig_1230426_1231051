@@ -1,0 +1,39 @@
+@startuml
+' Sources: SIDIS-2026-2027-P1, professor PL2/PL3, PSOFT assignment,
+' PSOFT ZIP and output/arq_corrigida.puml. Proposed distributed design.
+' Solid arrows: requested operational dependencies. Dashed arrows: additional
+' consumers already present in arq_corrigida.puml and supported by PSOFT queries.
+' No DDD integration pattern (e.g. Shared Kernel) is assumed without evidence.
+title AISafe - DDD Context Map\nProposed distributed architecture
+top to bottom direction
+skinparam monochrome true
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowFontSize 12
+skinparam NoteBackgroundColor white
+
+rectangle "Route / Flight Operations\n\nRoute, RouteHistory, Flight" as Route
+rectangle "Aircraft Management\n\nAircraftModel, Aircraft\nAircraftAvailability, AircraftCertification" as Aircraft
+rectangle "Airport Management\n\nAirport, Runway, Facilities\nAirportStatus, Certification" as Airport
+rectangle "Maintenance Management\n\nMaintenanceTemplate, MaintenanceRecord" as Maintenance
+
+Route -down-> Aircraft : HTTP/REST\nExistence, operational status,\nrange and capacity
+Route -down-> Airport : HTTP/REST\nOrigin and destination,\noperational status, certifications
+Route -down-> Maintenance : HTTP/REST\nMaintenance status\nand maintenance-related availability
+Maintenance --> Aircraft : HTTP/REST\nExistence and minimum required data\n(model and flight hours when needed)
+Aircraft ..> Route : HTTP/REST\nCompatible routes, flight queries\nand statistics
+Airport ..> Route : HTTP/REST\nAirport routes and statistics
+
+legend bottom left
+  Arrows point from the consumer to the information provider.
+  Solid: operational dependencies. Dashed: existing reporting/query dependencies.
+  Each Bounded Context owns its business logic and data.
+  Cross-context dependencies use HTTP/REST; there is no shared database.
+  Boundaries follow business responsibilities and DDD principles.
+  APIs are proposed: direct cross-context repository access must be replaced.
+  Flight represents ScheduledFlight in the current PSOFT code.
+  Model-to-airport certification eligibility remains TBD in the current model.
+endlegend
+@enduml
