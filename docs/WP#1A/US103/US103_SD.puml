@@ -1,0 +1,42 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+
+title Sequence Diagram: US103 - See Aircraft
+
+participant ":AuthController" as Auth
+
+actor "ATCC/Backoffice" as User
+participant ":AuthController" as Auth
+participant ":HangarController" as Ctrl
+participant ":AircraftSearchService" as aircraftSearchService
+
+participant ":AircraftRepository" as RepoAircraft
+
+activate User
+
+User -> Auth : Authenticate User
+activate Auth
+Auth --> User : Authentication Successful (Token JWT)
+deactivate Auth
+
+
+User -> Ctrl : getAircraft(registrationNumber)
+activate Ctrl
+
+Ctrl -> aircraftSearchService : spotAircraftInCatalog(modelName)
+activate aircraftSearchService
+
+aircraftSearchService -> RepoAircraft :findByRegistrationNumber(registrationNumber)
+activate RepoAircraft
+RepoAircraft --> aircraftSearchService : Optional<Aircraft>
+deactivate RepoAircraft
+aircraftSearchService-->Ctrl : Optional<Aircraft>
+deactivate aircraftSearchService
+
+Ctrl --> User : Success (200 + AircraftResponse)
+Ctrl --> User : Error
+
+deactivate Ctrl
+deactivate User
+@enduml

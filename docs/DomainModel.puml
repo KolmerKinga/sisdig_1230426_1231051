@@ -1,0 +1,390 @@
+@startuml
+skinparam classAttributeIconSize 0
+hide empty members
+skinparam packageStyle frame
+
+' AIRPORT AGGREGATE
+
+package "Aggregate: Airport" <<Frame>> {
+
+class Airport <<aggregate root>> {
+    - iataCode: String <<id>>
+    - airportType: String
+    - name: String
+    - status: AirportStatus
+    - airportLocation: AirportLocation
+    - facilities: Facilities
+    - routeDistance: Double
+    - airportRunways: List<Runway>
+    - certifications: List<Certification>
+    - contacts: List<Contact>
+    - airportPhotos: List<String>
+    + getIataCode(): String
+    + getName(): String
+}
+class Runway <<entity>> {
+    - runwayId: Long <<id>>
+    - runwayName: String
+    - length: Double
+    - orientation: String
+    - status: RunwayStatus
+}
+
+class AirportLocation <<value object>> {
+    - city: String
+    - country: String
+    - timezone: String
+    - region: String
+    - latitude: Double
+    - longitude: Double
+}
+
+class Facilities <<value object>> {
+    - terminalCount: Integer
+    - gateCount: Integer
+    - services: List<String>
+}
+
+class Contact <<value object>> {
+    - type: ContactType
+    - value: String
+}
+
+class Certification <<entity>> {
+    - name: String
+    - category: String
+    - startsAt: Date
+    - expiresAt: Date
+}
+
+enum AirportStatus {
+    OPERATIONAL
+    CLOSED
+    UNDER_MAINTENANCE
+}
+
+enum RunwayStatus {
+    OPEN
+    IN_USE
+    UNDER_MAINTENANCE
+}
+
+enum ContactType {
+    PHONE
+    EMAIL
+    FAX
+    SOCIAL_NETWORK
+}
+
+Airport *-- "0..*" Runway
+Airport "1"--"1" AirportLocation
+Airport *-- Facilities
+Airport *-- "0..*" Contact
+Airport *-- "0..*" Certification
+}
+
+' FLIGHT AGGREGATE
+
+package "Aggregate: Flight" <<Frame>> {
+
+class Flight <<aggregate root>> {
+    - flightId: Long <<id>>
+    - route: Route
+    - aircraft: Aircraft
+    - flightStatus: FlightStatus
+    - scheduledDeparture: LocalDateTime
+    - scheduledArrival: LocalDateTime
+    + Flight(route: Route, aircraft: Aircraft, scheduledDeparture: LocalDateTime, scheduledArrival: LocalDateTime)
+    + updateAircraft(aircraft: Aircraft)
+    + changeRoute(route: Route)
+    + startFlight()
+    + completeFlight()
+    + cancelFlight()
+    + isActive(): Boolean
+    + getFlightId(): Long
+    + getRoute(): Route
+    + getAircraft(): Aircraft
+    + getFlightStatus(): FlightStatus
+    + getScheduledDeparture(): LocalDateTime
+    + getScheduledArrival(): LocalDateTime
+}
+
+enum FlightStatus {
+    DELAYED
+    SCHEDULED
+    DEPARTED
+    CANCELED
+    ARRIVED
+    IN_PROGRESS
+}
+}
+
+' ROUTE AGGREGATE
+
+package "Aggregate: Route" <<Frame>> {
+
+class Route <<aggregate root>> {
+    - routeId: Long <<id>>
+    - routeName: String
+    - status: RouteStatus
+    - type: RouteType
+    - originAirport: Airport
+    - destinationAirport: Airport
+    - routeHistory: RouteHistory
+    - estimatedFlightTimeHours: Double
+    - routeRequirements: RouteRequirements
+
+    + Route(routeRequirements: RouteRequirements, status: RouteStatus, type: RouteType,
+            routeHistory: RouteHistory, estimatedFlightTimeHours: Double,
+            originAirport: Airport, destinationAirport: Airport, routeName: String)
+
+    + activateRoute()
+    + suspendRoute()
+    + retireRoute()
+    + updateEstimatedFlightTime(estimatedFlightTimeHours: Double)
+    + changeDestination(newDestination: Airport)
+    + isOperational(): Boolean
+
+    + getRouteId(): Long
+    + getStatus(): RouteStatus
+    + getType(): RouteType
+    + getOriginAirport(): Airport
+    + getDestinationAirport(): Airport
+    + getRouteHistory(): RouteHistory
+    + getEstimatedFlightTimeHours(): Double
+    + getRouteRequirements(): RouteRequirements
+}
+
+class RouteHistory <<value object>>{
+    - routeBegin: Date
+    - routeFinish: Date
+    - routeUsage: Integer
+    +updateRouteUsage(usage: Integer)
+}
+
+class RouteRequirements <<value object>> {
+    - requiredRange: Double
+    - requiredCapacity: Integer
+}
+
+enum RouteStatus {
+    ACTIVE
+    INACTIVE
+    ARCHIVED
+}
+
+enum RouteType{
+    DIRECT
+    SCALED
+}
+
+Route *-- RouteRequirements
+Route "1"--"1" RouteHistory
+}
+
+' AIRCRAFT MODEL AGGREGATE
+
+package "Aggregate: AircraftCatalog" <<Frame>> {
+
+class AircraftModel {
+    - modelName: String
+    - modelImage: List<String>
+    - manufacturer: String
+    - aircraftModelSpecs: AircraftSpecs
+
+    + AircraftModel(modelName: String, manufacturer: String,
+                    aircraftModelSpecs: AircraftSpecs,
+                    modelImage: List<String>)
+    + getModelName(): String
+}
+
+class AircraftSpecs <<value object>> {
+    - fuelCapacityLiters: Double
+    - maximumRangeKm: Double
+    - cruisingSpeedKph: Double
+    - updateAircraftSpecs()
+}
+
+AircraftModel *-- AircraftSpecs
+}
+
+' AIRCRAFT AGGREGATE
+
+package "Aggregate: Aircraft" <<Frame>> {
+
+class Aircraft <<aggregate root>> {
+    - registrationNumber: String <<id>>
+    - model: AircraftModel
+    - status: AircraftAvailability
+    - manufacturingDate: LocalDate
+    - totalOperationalHours: Double
+    - totalFlightHours: Double
+    - meanRange: Double
+    - features: List<String>
+    - seatingPack: SeatingPack
+    - components: List<InstalledComponent>
+    - certifications: List<AircraftCertification>
+
+    + Aircraft(registrationNumber: String, model: AircraftModel,
+               manufacturingDate: LocalDate,
+               totalOperationalHours: Double,
+               totalFlightHours: Double)
+    + sendToMaintenance()
+    + activateAircraft()
+    + retireAircraft()
+    + installComponent(components: InstalledComponent)
+    + removeComponent(components: InstalledComponent)
+    + addCertification(certification: AircraftCertification)
+    + configureSeating(seatingPack: SeatingPack)
+    + addFeature(feature: String)
+    + updateOperationalHours(additionalHours: Double)
+    + updateFlightHours(additionalHours: Double)
+    + isReadyForFlight(): Boolean
+    + getComponents(): List<InstalledComponent>
+    + getCertifications(): List<AircraftCertification>
+    + getFeatures(): List<String>
+    + getRegistrationNumber(): String
+    + getModel(): AircraftModel
+    + getStatus(): AircraftAvailability
+    + getManufacturingDate(): LocalDate
+    + getTotalOperationalHours(): Double
+    + getTotalFlightHours(): Double
+    + getMeanRange(): Double
+    + getSeatingPack(): SeatingPack
+}
+
+class SeatingPack <<value object>>{
+    - seatingCapacity: Integer
+    - seatingOrientation: String
+}
+
+class InstalledComponent <<entity>> {
+    - serialNumber: String <<id>>
+    - partNumber: String <<ref>>
+    - status: String
+}
+
+class AircraftCertification <<entity>> {
+    - aircraftCertificationId: Long
+    - name: String
+    - category: String
+    - startAt: LocalDate
+    - expiresAt: LocalDate
+}
+
+enum AircraftAvailability {
+    AVAILABLE
+    IN_FLIGHT
+    MAINTENANCE
+    INACTIVE
+}
+
+Aircraft *-- "0..*" InstalledComponent
+Aircraft *-- "0..*" AircraftCertification
+Aircraft *-- "1..*" SeatingPack
+
+}
+
+
+' MAINTENANCE AGGREGATE
+
+package "Aggregate: Maintenance" <<Frame>> {
+
+class MaintenanceRecord <<aggregate root>> {
+   - recordId: Long <<id>>
+   - aircraft: Aircraft <<ref>>
+   - maintenanceTemplate: MaintenanceTemplate <<ref>>
+   - description: String
+   - technicians: List<Collaborator> <<ref>>
+   - supervisor: Collaborator <<ref>>
+   - startDate: LocalDate
+   - endDate: LocalDate
+   - usedParts: List<UsedPart>
+   - durationHours: Double
+   - doneList: DoneList
+   - status: MaintenanceStatus
+   + MaintenanceRecord(usedParts: List<UsedPart>,durationHours: Double,
+    startDate: LocalDate,supervisor: Collaborator,description: String,
+    technicians: List<Collaborator>,maintenanceTemplate: MaintenanceTemplate,
+    aircraft: Aircraft)
+   + updateDuration(realDuration: Double): void
+   + assignTechnician(technician: Collaborator): void
+   + addUsedPart(part: UsedPart): void
+   + markAsCompleted(notes: String,tasksDone: Map<String, Boolean>,endDate: LocalDate): void
+   + markAsOngoing(): void
+   + getRecordId(): Long
+   + getAircraft(): Aircraft
+   + getMaintenanceTemplate(): MaintenanceTemplate
+   + getTechnicians(): List<Collaborator>
+   + getSupervisor(): Collaborator
+   + getStatus(): MaintenanceStatus
+ }
+
+class MaintenanceTemplate <<entity>> {
+    - templateId: Long <<id>>
+    - name: String
+    - expectedDuration: Double
+    - templateChecklist: Map<String,Boolean>
+    - attribute: MaintenanceAttribute
+    - operation: MaintenanceType
+}
+
+class DoneList <<value object>>{
+    - tasksDone: Map<String,Boolean>
+    - completionNotes: String
+}
+
+enum MaintenanceType {
+    INSPECTION
+    SCHEDULED
+    OVERHAUL
+    MODIFICATION
+}
+
+enum MaintenanceStatus {
+    ONGOING
+    COMPLETED
+    INLINE
+}
+
+enum MaintenanceAttribute {
+    ENGINE
+    AIRFRAME
+    AVIONICS
+    INTERIOR
+    EXTERIOR
+}
+
+
+class UsedPart <<value object>> {
+    - partSerialNumber: String
+    - quantity: Integer
+    - price: Double
+}
+MaintenanceRecord *-- "1" MaintenanceTemplate
+MaintenanceRecord *-- "1..*" UsedPart
+MaintenanceRecord *-- "1" DoneList
+}
+
+package "Aggregate: Users" <<Frame>> {
+
+
+class Collaborator <<entity>> {
+    - pk: Long
+    - collaboratorId: UUID
+    - username: String
+    - password: String
+    - email: String
+}
+
+}
+
+' RELATIONSHIPS
+
+Flight --> Route : route <<ref>>
+Flight --> Aircraft : aircraft <<ref>>
+Aircraft --> AircraftModel : model <<ref>>
+Route --> Airport : IATA codes <<ref>>
+MaintenanceRecord --> Aircraft : aircraftRegistrationNumber <<ref>>
+Collaborator --> MaintenanceRecord : collaboratorId <<ref>>
+@enduml

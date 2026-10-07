@@ -1,0 +1,36 @@
+{
+  "iataCode": "LIS",
+  "airportType": "International",
+  "name": "Humberto Delgado Airport",
+  "status": "OPERATIONAL",
+  "location": {
+    "city": "Lisbon",
+    "longitude": -9.1359,
+    "latitude": 38.7742,
+    "region": "Lisbon",
+    "timezone": "Europe/Lisbon",
+    "country": "Portugal"
+  },
+  "facilities": {
+    "terminalCount": 2,
+    "services": ["fuel", "maintenance"],
+    "gateCount": 48
+  },
+  "routeDistance": 0.0,
+  "runways": [
+    {
+      "runwayName": "03/21",
+      "length": 3805.0,
+      "orientation": "NE/SW",
+      "status": "OPEN"
+    }
+  ],
+  "certifications": [],
+  "contacts": [
+    {
+      "type": "EMAIL",
+      "value": "ops@lis.pt"
+    }
+  ],
+  "airportPhotos": ["https://example.com/lis.jpg"]
+}

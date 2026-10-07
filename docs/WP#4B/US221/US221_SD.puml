@@ -1,0 +1,34 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+
+title Sequence Diagram - US221
+
+actor "Maintenance Supervisor" as SUP
+participant "MaintenanceRecordController" as CTRL
+participant "MaintenanceReportService" as SVC
+participant "MaintenanceRecordRepository" as REPO
+
+SUP -> CTRL : GET /api/maintenance/turnaround-average
+activate CTRL
+
+CTRL -> SVC : averageTurnaroundTimePerAircraftType()
+activate SVC
+
+SVC -> REPO : findByStatus(COMPLETED)
+activate REPO
+REPO --> SVC : List<MaintenanceRecord>
+deactivate REPO
+
+note right of SVC
+  Groups records by aircraft model name.
+  For each group, calculates average of
+  (endDate - startDate) in days.
+end note
+
+SVC --> CTRL : List<TurnaroundAverage>
+deactivate SVC
+
+CTRL --> SUP : 200 OK + List<TurnaroundAverageResponse>
+deactivate CTRL
+@enduml

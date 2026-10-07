@@ -1,0 +1,16 @@
+@startuml
+actor "ATCC" as ATCC
+participant "System" as Sys
+
+ATCC -> Sys: Authenticate User
+Sys --> ATCC: Authentication Successful
+
+ATCC -> Sys: Update Aircraft Operational Status
+
+alt Aircraft found
+    Sys --> ATCC: Display update success
+else Aircraft not found
+    Sys --> ATCC: Show error message
+end
+
+@enduml

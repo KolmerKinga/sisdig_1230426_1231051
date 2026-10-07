@@ -1,0 +1,9 @@
+@startuml SSD_US210_BusiestAirports
+
+actor "Backoffice Operator" as BO
+participant "System" as SYS
+
+BO -> SYS : GET /api/airports/busiest
+SYS --> BO : 200 OK\n{[{iataCode, name, numberOfRoutes},...]}
+
+@enduml

@@ -1,0 +1,18 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+
+title Sequence Diagram - US213
+
+actor "ATCC" as ATCC
+participant "FlightController" as CTRL
+participant "RouteService" as SVC
+participant "FlightRepository" as REPO
+
+ATCC -> CTRL : getScheduledFlightsForAircraft(registration)
+CTRL -> SVC : getScheduledFlightsForAircraft(registration)
+SVC -> REPO : findByAircraft_RegistrationNumber(registration)
+REPO --> SVC : List<Flight>
+SVC --> CTRL : List<Flight>
+CTRL --> ATCC : 200 OK + FlightResponse list
+@enduml

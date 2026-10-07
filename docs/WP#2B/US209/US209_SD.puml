@@ -1,0 +1,24 @@
+@startuml US209_GetAirportRoutes
+
+actor "Backoffice Operator / ATCC" as USER
+participant "AirportController" as CTRL
+participant "AirportService" as SVC
+participant "AirportRepository" as AIRPORTREPO
+participant "RouteRepository" as ROUTEREPO
+
+USER -> CTRL : GET /api/airports/{iataCode}/routes
+
+CTRL -> SVC : findRoutesByAirport(iataCode)
+
+SVC -> AIRPORTREPO : findByIataCode(iataCode)
+AIRPORTREPO --> SVC : Airport
+
+SVC -> ROUTEREPO : findByOriginAirport_IataCode\nOrDestinationAirport_IataCode(iataCode, iataCode)
+ROUTEREPO --> SVC : List<Route>
+
+SVC --> CTRL : List<Route>
+CTRL -> CTRL : map List<Route> → List<RouteResponse>
+
+CTRL --> USER : 200 OK\n{[routeDTO,...]}
+
+@enduml

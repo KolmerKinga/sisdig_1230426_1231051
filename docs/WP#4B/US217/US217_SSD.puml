@@ -1,0 +1,19 @@
+@startuml
+actor "Maintenance Technician" as BO
+participant "System" as Sys
+
+BO -> Sys: Authenticate User
+Sys --> BO: Authentication Successful
+
+BO -> Sys: Patch Maintenance Record with a maintenance type
+
+alt Maintenance Record exists
+    Sys --> BO: Maintenance Record updated successfully
+else Maintenance Record not found
+    Sys --> BO: Inform information update failure
+end
+
+@enduml
+
+As a Maintenance Technician, I want to categorize maintenance records by maintenance component (engine,
+airframe, avionics, interior, exterior

@@ -1,0 +1,18 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+
+title Sequence Diagram - US214
+
+actor "ATCC" as ATCC
+participant "RouteController" as CTRL
+participant "RouteService" as SVC
+participant "RouteRepository" as REPO
+
+ATCC -> CTRL : listActiveRoutes(sortBy)
+CTRL -> SVC : listActiveRoutes(sortBy)
+SVC -> REPO : findByStatus(ACTIVE, sort)
+REPO --> SVC : List<Route>
+SVC --> CTRL : List<Route>
+CTRL --> ATCC : 200 OK + RouteResponse list
+@enduml

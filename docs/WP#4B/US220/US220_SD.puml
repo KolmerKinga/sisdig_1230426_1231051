@@ -1,0 +1,19 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+
+title Sequence Diagram - US220
+
+actor "ATCC" as User
+participant "MaintenanceRecordController" as Ctrl
+participant "MaintenanceReportService" as Service
+participant "MaintenanceRecordRepository" as Repo
+
+User -> Ctrl : maintenanceCosts(groupBy)
+Ctrl -> Service : maintenanceCosts(groupBy)
+Service -> Repo : findAll()
+Repo --> Service : List<MaintenanceRecord>
+Service -> Service : sum used parts by aircraft or model
+Service --> Ctrl : List<MaintenanceCostReport>
+Ctrl --> User : 200 OK + MaintenanceCostReportResponse list
+@enduml

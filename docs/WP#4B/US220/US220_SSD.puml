@@ -1,0 +1,14 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+
+title System Sequence Diagram (SSD) - US220
+
+actor "ATCC" as User
+participant "System" as System
+
+User -> System : GET /api/maintenance/reports/costs?groupBy=aircraft|model
+activate System
+System --> User : 200 OK + maintenance cost report
+deactivate System
+@enduml

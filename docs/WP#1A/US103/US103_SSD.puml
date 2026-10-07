@@ -1,0 +1,16 @@
+@startuml
+actor "Backoffice Operator / ATCC" as ATCC
+participant "System" as Sys
+
+ATCC -> Sys: Authenticate User
+Sys --> ATCC: Authentication Successful
+
+ATCC -> Sys: Search Aircraft by Registration Number
+
+alt Aircraft found
+    Sys --> ATCC: Display aircraft details
+else Aircraft not found
+    Sys --> ATCC: Show "Aircraft not found"
+end
+
+@enduml

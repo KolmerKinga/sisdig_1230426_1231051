@@ -1,0 +1,16 @@
+@startuml
+actor "ATCC" as ATCC
+participant "System" as Sys
+
+ATCC -> Sys: Authenticate User
+Sys --> ATCC: Authentication Successful
+
+ATCC -> Sys: Search Aircraft by model, status, or manufacturing year
+
+alt Aircraft found
+    Sys --> ATCC: Display all aircraft that match the selected filters
+else No aircraft found
+    Sys --> ATCC: Show "No aircraft found"
+end
+
+@enduml

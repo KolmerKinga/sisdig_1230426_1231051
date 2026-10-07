@@ -1,0 +1,65 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+
+title Diagrama de Sequência: US110 - Criar Rota de Voo
+
+actor "ATCC" as User
+participant ":ControladorAutenticacao" as Auth
+participant ":ControladorRota" as Ctrl
+participant ":ServicoRota" as Service
+participant "origem:RepositorioAeroporto" as RepoOrig
+participant "destino:RepositorioAeroporto" as RepoDest
+participant "rota:Rota" as Route <<Raiz do Agregado>>
+participant ":RepositorioRota" as RepoRoute
+
+activate User
+
+User -> Auth : Autenticar Utilizador
+activate Auth
+Auth --> User : Autenticação Bem-sucedida
+deactivate Auth
+
+User -> Ctrl : criarRota(origem, destino, tempo, requisitos)
+activate Ctrl
+
+Ctrl -> Service : criarRota(origem, destino, tempoVoo, requisitos)
+activate Service
+
+    Service -> RepoOrig : procurarPorCodigoIata(origemIATA)
+    activate RepoOrig
+    RepoOrig --> Service : aeroportoOrigem
+    deactivate RepoOrig
+
+    Service -> RepoDest : procurarPorCodigoIata(destinoIATA)
+    activate RepoDest
+    RepoDest --> Service : aeroportoDestino
+    deactivate RepoDest
+
+    note over Service
+        Verifica se ambos os aeroportos
+        existem e estão operacionais.
+    end note
+
+    Service -> Route** : <<criar>> (origem, destino, tempo, requisitos)
+
+    Service -> RepoRoute : guardar(rota)
+    activate RepoRoute
+    RepoRoute --> Service : rotaGuardada
+    deactivate RepoRoute
+
+    Service --> Ctrl : rotaDTO
+
+    note over Ctrl
+        Define o estado com base no
+        resultado do Serviço.
+    end note
+
+    Ctrl --> User : Sucesso (201 Criado + Ligações)
+
+    Ctrl --> User : Erro (400 Pedido Inválido / 404 Não Encontrado)
+
+deactivate Service
+deactivate Ctrl
+deactivate User
+@enduml

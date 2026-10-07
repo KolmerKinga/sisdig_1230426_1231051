@@ -1,0 +1,24 @@
+@startuml US109_UpdateStatus
+
+actor "Backoffice Operator" as BO
+participant "AirportController" as CTRL
+participant "AirportService" as SVC
+participant "AirportRepository" as REPO
+
+BO -> CTRL : PATCH /api/airports/{iataCode}/status\n[JWT: BACKOFFICE_OPERATOR]\n{status: "UNDER_MAINTENANCE"}
+
+CTRL -> CTRL : validate JWT + role
+CTRL -> SVC : updateStatus(iataCode, newStatus)
+
+SVC -> SVC : validate AirportStatus enum
+SVC -> REPO : findByIataCode(iataCode)
+REPO --> SVC : Airport (@version = N)
+
+SVC -> SVC : airport.changeStatus(newStatus)
+SVC -> REPO : save(airport)\n[@Version optimistic locking]
+REPO --> SVC : Airport (@version = N+1)
+
+SVC --> CTRL : AirportDTO
+CTRL --> BO : 200 OK\n{airportDTO + HATEOAS links}
+
+@enduml

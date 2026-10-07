@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Aircraft Utilization</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+<h1>Aircraft Utilization (km)</h1>
+<div class="chart-container">
+    <canvas id="utilizationChart"></canvas>
+</div>
+
+
+<script th:inline="javascript">
+
+    const utilizationData = /*[[${utilizationData}]]*/ [];
+    const datasets = {};
+
+    utilizationData.forEach(item => {
+
+        if (!datasets[item.registrationNumber]) {
+            datasets[item.registrationNumber] = {
+                label: item.registrationNumber,
+                data: [],
+                borderWidth: 2,
+                fill: false
+            };
+        }
+
+        datasets[item.registrationNumber].data.push({
+            x: item.period,
+            y: item.utilizationRate
+        });
+
+    });
+
+
+    new Chart(
+        document.getElementById('utilizationChart'),
+        {
+            type: 'line',
+            data: {
+                datasets: Object.values(datasets)
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+
+                scales: {
+                    x: {
+                        type: 'category'
+                    },
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        }
+    );
+
+</script>
+
+
+<style>
+    .chart-container {
+        width: 70%;
+        height: 400px;
+        margin: 40px auto;
+    }
+</style>
+
+</body>
+
+
+</html>

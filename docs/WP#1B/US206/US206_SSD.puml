@@ -1,0 +1,15 @@
+@startuml
+actor "ATCC" as BO
+participant "System" as Sys
+
+BO -> Sys: Authenticate User
+Sys --> BO: Authentication Successful
+
+BO -> Sys: Asks for total operational hours for each aircraft
+
+alt Aicrafts exist
+    Sys --> BO: Returns an aircraft list, in a descendent order, with the aircraft with most operational hours
+else Aircrafts do not exist
+end
+@enduml
+US206 - As an ATCC, I want to calculate the total operational hours for each aircraft in my fleet

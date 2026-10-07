@@ -1,0 +1,21 @@
+@startuml US107_GetAirport
+
+actor "Backoffice Operator / ATCC" as USER
+participant "AirportController" as CTRL
+participant "AirportService" as SVC
+participant "AirportRepository" as REPO
+
+USER -> CTRL : GET /api/airports/{iata}\n[JWT válido]
+
+CTRL -> CTRL : validar JWT + role
+CTRL -> SVC : getAirportByIata(iata)
+
+SVC -> REPO : findByIataCode(iata)
+REPO --> SVC : Airport
+
+SVC -> SVC : map Airport → AirportDTO
+SVC --> CTRL : AirportDTO
+
+CTRL --> USER : 200 OK\n{airportDTO + HATEOAS links}
+
+@enduml

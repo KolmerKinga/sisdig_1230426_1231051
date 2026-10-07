@@ -1,0 +1,46 @@
+@startuml
+
+actor "ATCC" as BO
+
+participant ":AuthController" as Auth
+participant "HangarController" as CC
+participant "AircraftSearchService" as AMS
+participant "RouteSearchService" as RSS
+participant "AircraftRepository" as AMR
+participant "RouteRepository" as RR
+
+BO -> Auth : Authenticate User
+activate Auth
+Auth --> BO : Authentication Successful (Token JWT)
+deactivate Auth
+
+BO -> CC : GET /api/hangar/aircraft/{registrationNumber}/compatible-routes"\n{ modelName,modelImage, manufacturer,\n aircraftModelSpecs}
+activate CC
+
+CC -> AMS : spotAircraftInHangar(registrationNumber)
+activate AMS
+
+AMS -> AMR : findById(registrationNumber)
+activate AMR
+
+AMR --> AMS : aircraft
+deactivate AMR
+
+AMS --> CC : aircraft
+deactivate AMS
+
+CC-> RSS: findCompatibleRoutes(aircraft)
+    activate RSS
+        RSS--> RSS: compute capacity & range
+        RSS->RR: findAll()
+        activate RR
+        RR-->RSS: all routes
+        deactivate RR
+        RSS->RSS: filter routes
+    RSS-->CC: compatible routes
+deactivate RSS
+
+CC --> BO : 200 compatible routes
+deactivate CC
+
+@enduml

@@ -1,0 +1,49 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+
+title Diagrama de Sequência: US115 - Criar Modelo de Manutenção
+
+actor "Técnico de Manutenção" as User
+participant ":ControladorAutenticacao" as Auth
+participant ":ControladorManutencao" as Ctrl
+participant ":CasoDeUsoCriarModeloManutencao" as UseCase
+participant ":RepositorioModeloAeronave" as RepoModel
+participant "template:ModeloManutencao" as Template <<Raiz do Agregado>>
+participant ":RepositorioModeloManutencao" as RepoTemplate
+
+activate User
+
+User -> Auth : Autenticar Utilizador
+activate Auth
+Auth --> User : Autenticação Bem-sucedida (Token JWT)
+deactivate Auth
+
+User -> Ctrl : criarModeloManutencao(nome, tipo, modelosAeronave, checklist)
+activate Ctrl
+
+Ctrl -> UseCase : executar(requestDTO)
+activate UseCase
+
+    UseCase -> RepoModel : verificarSeModelosExistem(modelosAeronave)
+    activate RepoModel
+    RepoModel --> UseCase : modelosValidos
+    deactivate RepoModel
+
+    UseCase -> Template** : <<criar>> (nome, tipo, modelosAeronave, checklist)
+
+    UseCase -> RepoTemplate : guardar(template)
+    activate RepoTemplate
+    RepoTemplate --> UseCase : modeloGuardado
+    deactivate RepoTemplate
+
+    UseCase --> Ctrl : templateResponseDTO / Erro
+
+    Ctrl --> User : Sucesso (201 Criado + Ligações)
+
+    Ctrl --> User : Erro (400 Pedido Inválido)
+
+deactivate UseCase
+deactivate Ctrl
+deactivate User
+@enduml

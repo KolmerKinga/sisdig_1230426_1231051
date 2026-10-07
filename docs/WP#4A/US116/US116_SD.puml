@@ -1,0 +1,54 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+
+title Diagrama de Sequência: US116 - Registar Atividade de Manutenção
+
+actor "Técnico de Manutenção" as User
+participant ":ControladorAutenticacao" as Auth
+participant ":ControladorManutencao" as Ctrl
+participant ":ServicoManutencao" as Service
+participant ":RepositorioAeronave" as RepoAircraft
+participant ":RepositorioModeloManutencao" as RepoTemplate
+participant "atividade:AtividadeManutencao" as Activity <<Raiz do Agregado>>
+participant ":RepositorioAtividadeManutencao" as RepoActivity
+
+activate User
+
+User -> Auth : Autenticar Utilizador
+activate Auth
+Auth --> User : Autenticação Bem-sucedida (Token JWT)
+deactivate Auth
+
+User -> Ctrl : registarAtividadeManutencao(matriculaAeronave, templateId, data, tecnicos, estado, notas)
+activate Ctrl
+
+Ctrl -> Service : registarAtividade(matriculaAeronave, templateId, data, tecnicos, estado, notas)
+activate Service
+
+    Service -> RepoAircraft : procurarPorMatricula(matriculaAeronave)
+    activate RepoAircraft
+    RepoAircraft --> Service : aeronave
+    deactivate RepoAircraft
+
+    Service -> RepoTemplate : procurarPorId(templateId)
+    activate RepoTemplate
+    RepoTemplate --> Service : template
+    deactivate RepoTemplate
+
+    Service -> Activity** : <<criar>> (aeronave, template, data, tecnicos, estado, notas)
+
+    Service -> RepoActivity : guardar(atividade)
+    activate RepoActivity
+    RepoActivity --> Service : atividadeGuardada
+    deactivate RepoActivity
+
+    Service --> Ctrl : maintenanceActivityDTO / Erro
+
+    Ctrl --> User : Sucesso (201 Criado + Ligações)
+    Ctrl --> User : Erro (400 Pedido Inválido / 404 Não Encontrado)
+
+deactivate Service
+deactivate Ctrl
+deactivate User
+@enduml

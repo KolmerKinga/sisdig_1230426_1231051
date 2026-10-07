@@ -1,0 +1,14 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+
+title System Sequence Diagram (SSD) - US213
+
+actor "ATCC" as ATCC
+participant "System" as SYS
+
+ATCC -> SYS : GET /api/flights/aircraft/{registrationNumber}
+activate SYS
+SYS --> ATCC : 200 OK + Scheduled Flights
+deactivate SYS
+@enduml

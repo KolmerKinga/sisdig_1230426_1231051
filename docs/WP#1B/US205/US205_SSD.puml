@@ -1,0 +1,17 @@
+@startuml
+actor "ATCC" as BO
+participant "System" as Sys
+
+BO -> Sys: Authenticate User
+Sys --> BO: Authentication Successful
+
+BO -> Sys: to view real-time aircraft availability status
+
+alt Aircrafts exist
+    Sys --> BO: Returns all aircrafts separated categorized by status
+else Aircrafts do not exist
+    Sys -->BO: Return an empty JSON
+
+end
+@enduml
+US205 - As an ATCC, I want to view real-time aircraft availability status (available, in-flight, under maintenance, inactive)

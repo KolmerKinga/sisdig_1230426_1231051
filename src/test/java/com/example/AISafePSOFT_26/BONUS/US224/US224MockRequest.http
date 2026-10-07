@@ -1,0 +1,25 @@
+POST http://localhost:8081/auth/login
+Content-Type: application/json
+
+{
+  "username": "atcc",
+  "password": "atcc123"
+}
+
+
+### gets aircrafts by specific features - 1201107
+
+###
+
+@token = eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI1NTdlNTNkMS1iYjU5LTRhZjItYmFjZS01ZDM3MGI1YzAzYjAiLCJyb2xlcyI6WyJBVENDIl0sImlhdCI6MTc4MjA3MjY4OSwiZXhwIjoxNzgyMDc2Mjg5fQ.8Ij6o0vve4Hx7sbx5bPW883yW43ccgYogYbRcV16kTs
+
+GET http://localhost:8081/api/hangar/aicraft-features
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "features": [
+    "Wi-Fi",
+    "USB Charging"
+  ]
+}

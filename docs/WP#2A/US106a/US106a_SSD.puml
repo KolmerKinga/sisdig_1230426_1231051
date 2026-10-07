@@ -1,0 +1,9 @@
+@startuml SSD_US106a_AddCertification
+
+actor "Backoffice Operator / ATCC" as USER
+participant "System" as SYS
+
+USER -> SYS : POST /api/airports/{iata}/certifications\n{modelName, startAt, expiresAt}
+SYS --> USER : 201 Created\n{certificationDTO + links}
+
+@enduml

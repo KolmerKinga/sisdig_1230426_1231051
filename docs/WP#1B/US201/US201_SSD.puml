@@ -1,0 +1,16 @@
+@startuml
+actor "Backoffice Operator" as BO
+participant "System" as Sys
+
+BO -> Sys: Authenticate User
+Sys --> BO: Authentication Successful
+
+BO -> Sys: Patch Aircraft Model
+
+alt Aircraft model exists
+    Sys --> BO: Aircraft patched successfully
+else Aircraft model not found
+    Sys --> BO: Inform information update failure
+end
+
+@enduml

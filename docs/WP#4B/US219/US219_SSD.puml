@@ -1,0 +1,14 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+
+title System Sequence Diagram (SSD) - US219
+
+actor "Maintenance Supervisor" as User
+participant "System" as System
+
+User -> System : GET /api/maintenance/ongoing
+activate System
+System --> User : 200 OK + ongoing maintenance records
+deactivate System
+@enduml

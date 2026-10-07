@@ -1,0 +1,30 @@
+@startuml
+
+actor "Backoffice Operator" as BO
+
+participant ":AuthController" as Auth
+participant "ModelCatalogController" as CC
+participant "AircraftSearchService" as ASS
+participant "aircraftRepository" as AR
+
+
+BO -> Auth : Authenticate User
+activate Auth
+Auth --> BO : Authentication Successful (Token JWT)
+deactivate Auth
+BO -> CC : GET /catalog/rankings?mode="flight-hours"
+activate CC
+
+CC -> ASS : findMostUsedModelsByFlyingAircraftHours()
+activate ASS
+    ASS -> AR : findAll()
+    activate AR
+    AR --> ASS : all aircrafts
+    deactivate AR
+    ASS->ASS: group model and the sum \nof the aircraft flight-hours
+ASS --> CC : returns the grouped list
+deactivate ASS
+
+CC-->BO: 200 models
+deactivate CC
+@enduml

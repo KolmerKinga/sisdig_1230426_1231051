@@ -1,0 +1,28 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+
+title System Sequence Diagram (SSD) - US115
+
+actor "Maintenance Technician" as User
+participant "System" as System
+
+activate User
+
+
+User -> System : Authenticate User
+activate System
+System --> User : Authentication Successful (Token JWT)
+deactivate System
+
+
+User -> System : logMaintenanceActivity(aircraftReg, templateId, date, technicians, status, notes)
+activate System
+
+
+System --> User : Inform Success (201 Created + Activity Data)
+System --> User : Error (400 Bad Request / 404 Not Found)
+deactivate System
+
+deactivate User
+@enduml

@@ -1,0 +1,22 @@
+@startuml US211_GroupAirports
+
+actor "Backoffice Operator" as BO
+participant "AirportController" as CTRL
+participant "AirportService" as SVC
+participant "AirportRepository" as REPO
+
+BO -> CTRL : GET /api/airports/grouped?by={criteria}
+
+CTRL -> SVC : groupAirportsBy(criteria)
+
+SVC -> REPO : findAll()
+REPO --> SVC : List<Airport>
+
+SVC -> SVC : agrupar por criteria\n(country → getCountry(), city → getCity())
+
+SVC --> CTRL : Map<String, List<Airport>>
+CTRL -> CTRL : map → Map<String, List<AirportResponse>>
+
+CTRL --> BO : 200 OK\n{Map<criteria, [airportDTO,...]>}
+
+@enduml

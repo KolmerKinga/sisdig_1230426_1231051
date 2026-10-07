@@ -1,0 +1,13 @@
+@startuml
+actor "Backoffice Operator" as BO
+participant "System" as Sys
+
+BO -> Sys: Authenticate User
+Sys --> BO: Authentication Successful
+
+BO -> Sys: Looks for the Top 5 most utilized aircraft models based on total flight hours or number of assignments
+
+alt Models exist
+    Sys --> BO: Returns the Top 5 models
+
+@enduml

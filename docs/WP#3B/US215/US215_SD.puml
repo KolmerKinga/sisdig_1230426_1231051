@@ -1,0 +1,18 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+
+title Sequence Diagram - US215
+
+actor "ATCC" as ATCC
+participant "RouteController" as CTRL
+participant "RouteService" as SVC
+participant "RouteRepository" as REPO
+
+ATCC -> CTRL : calculateTotalDistance()
+CTRL -> SVC : calculateTotalRouteDistance()
+SVC -> REPO : findAll()
+REPO --> SVC : List<Route>
+SVC --> CTRL : totalDistanceKm
+CTRL --> ATCC : 200 OK + TotalDistanceResponse
+@enduml

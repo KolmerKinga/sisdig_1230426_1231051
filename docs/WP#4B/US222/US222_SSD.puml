@@ -1,0 +1,20 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+
+title System Sequence Diagram (SSD) - US222
+
+actor "ATCC" as ATCC
+participant "System" as SYS
+
+ATCC -> SYS : GET /api/maintenance/alerts\n[?calendarDaysThreshold=180&flightHoursThreshold=500]
+activate SYS
+
+alt Aircraft due for maintenance exist
+    SYS --> ATCC : 200 OK + List<MaintenanceAlertResponse>
+else No aircraft due
+    SYS --> ATCC : 200 OK + []
+end
+
+deactivate SYS
+@enduml

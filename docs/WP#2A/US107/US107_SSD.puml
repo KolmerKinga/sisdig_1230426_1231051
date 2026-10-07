@@ -1,0 +1,9 @@
+@startuml SSD_US107_GetAirport
+
+actor "Backoffice Operator / ATCC" as USER
+participant "System" as SYS
+
+USER -> SYS : GET /api/airports/{iata}
+SYS --> USER : 200 OK\n{airportDTO + links}
+
+@enduml

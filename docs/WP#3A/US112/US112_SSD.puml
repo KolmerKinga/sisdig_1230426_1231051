@@ -1,0 +1,26 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+
+title Diagrama de Sequência do Sistema (SSD) - US112
+
+actor "ATCC / Backoffice" as User
+participant "Sistema" as System
+
+activate User
+
+User -> System : Autenticar Utilizador
+activate System
+System --> User : Autenticação Bem-sucedida (Token JWT)
+deactivate System
+
+User -> System : atualizarOuCriarRota(routeId, dadosAtualizacao)
+activate System
+
+System --> User : Informar Sucesso (200 OK)
+
+System --> User : Erro (400 Pedido Inválido / 404 Não Encontrado / 409 Conflito)
+deactivate System
+
+deactivate User
+@enduml

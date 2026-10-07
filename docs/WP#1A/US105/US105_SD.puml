@@ -1,0 +1,42 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+
+title Sequence Diagram: US105 - Update Aircraft Availability
+
+participant ":AuthController" as Auth
+
+actor "ATCC" as User
+participant ":AuthController" as Auth
+
+participant ":HangarController" as Ctrl
+participant ":AircraftSearchService" as aircraftSearchService
+
+participant ":AircraftModelRepository" as RepoAircraft
+
+activate User
+
+User -> Auth : Authenticate User
+activate Auth
+Auth --> User : Authentication Successful (Token JWT)
+deactivate Auth
+
+User -> Ctrl :getAircrafts(model,status,manufacturingDate)
+activate Ctrl
+
+Ctrl -> aircraftSearchService : findAircraftsMatchingFilter(model,status,manufacturingDate)
+activate aircraftSearchService
+
+aircraftSearchService -> RepoAircraft: findAll(specificationAircraft)
+activate RepoAircraft
+RepoAircraft --> aircraftSearchService : List<Aircraft>
+deactivate RepoAircraft
+aircraftSearchService-->Ctrl : List<Aircraft>
+deactivate aircraftSearchService
+
+Ctrl --> User : Success (200+List<AircraftResponse>)
+Ctrl --> User : Error
+
+deactivate Ctrl
+deactivate User
+@enduml

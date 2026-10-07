@@ -1,0 +1,20 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+
+title System Sequence Diagram (SSD) - US221
+
+actor "Maintenance Supervisor" as SUP
+participant "System" as SYS
+
+SUP -> SYS : GET /api/maintenance/turnaround-average
+activate SYS
+
+alt Completed records exist
+    SYS --> SUP : 200 OK + List<{aircraftType, averageDays}>
+else No completed records
+    SYS --> SUP : 200 OK + []
+end
+
+deactivate SYS
+@enduml

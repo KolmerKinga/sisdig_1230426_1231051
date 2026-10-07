@@ -1,0 +1,14 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+
+title System Sequence Diagram (SSD) - US214
+
+actor "ATCC" as ATCC
+participant "System" as SYS
+
+ATCC -> SYS : GET /api/routes/active?sortBy=popularity|distance
+activate SYS
+SYS --> ATCC : 200 OK + Active Routes
+deactivate SYS
+@enduml

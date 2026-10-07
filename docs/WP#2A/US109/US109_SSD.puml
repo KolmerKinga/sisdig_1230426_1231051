@@ -1,0 +1,9 @@
+@startuml SSD_US109_UpdateStatus
+
+actor "Backoffice Operator" as BO
+participant "System" as SYS
+
+BO -> SYS : PATCH /api/airports/{iata}/status\n{newStatus}
+SYS --> BO : 200 OK\n{airportDTO + links}
+
+@enduml

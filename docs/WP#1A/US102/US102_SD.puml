@@ -1,0 +1,66 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+
+title Sequence Diagram: US102 - Register Aircraft
+
+participant ":AuthController" as Auth
+
+actor "ATCC" as User
+participant ":AuthController" as Auth
+participant ":HangarController" as Ctrl
+participant ":AircraftModelSearchService" as aircraftModelSearchService
+
+participant ":AircraftModelRepository" as Repo
+participant ":Aircraft" as Aircraft
+
+participant ":AircraftLifeCycleUpdaterService" as aircraftLifeCycleUpdaterService
+
+participant ":AddAircraftUseCase" as AddUse
+participant ":AircraftRepository" as airRepo
+
+activate User
+
+User -> Auth : Authenticate User
+activate Auth
+Auth --> User : Authentication Successful (Token JWT)
+deactivate Auth
+
+
+User -> Ctrl : AddAircraft(AddAircraftRequest request)
+activate Ctrl
+
+Ctrl -> aircraftModelSearchService : spotAircraftInCatalog(modelName)
+activate aircraftModelSearchService
+
+aircraftModelSearchService -> Repo :findByModelName(modelName)
+activate Repo
+Repo --> aircraftModelSearchService : Optional<AircraftModel>
+deactivate Repo
+aircraftModelSearchService-->Ctrl : Optional<AircraftModel>
+deactivate aircraftModelSearchService
+
+
+Ctrl -> Aircraft: Aircraft(registrationNumber,model,manufacturingDate,totalOperationalHours,totalFlightHours)
+activate Aircraft
+Aircraft --> Ctrl: aircraft
+deactivate Aircraft
+
+Ctrl ->aircraftLifeCycleUpdaterService: changeAvailability(aircraft,newStatus)
+activate aircraftLifeCycleUpdaterService
+aircraftLifeCycleUpdaterService --> Ctrl
+deactivate aircraftLifeCycleUpdaterService
+
+Ctrl-> AddUse:execute(aircraft)
+activate AddUse
+    AddUse->airRepo: save(aircraft))
+    AddUse-->Ctrl
+deactivate airRepo
+deactivate AddUse
+
+Ctrl --> User : Success (201)
+Ctrl --> User : Error
+
+deactivate Ctrl
+deactivate User
+@enduml

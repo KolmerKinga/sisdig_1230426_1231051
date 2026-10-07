@@ -1,0 +1,16 @@
+@startuml
+actor ATCC
+participant "System" as Sys
+
+ATCC -> Sys: Authenticate User
+Sys --> ATCC: Authentication Successful
+
+ATCC -> Sys: Register Aircraft
+
+alt Aircraft model exists
+    Sys --> ATCC: Inform Successful Register
+else Aircraft model not found
+    Sys --> ATCC: Inform Registration Failure
+end
+
+@enduml

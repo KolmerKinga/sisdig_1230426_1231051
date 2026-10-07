@@ -1,0 +1,9 @@
+@startuml SSD_US211_GroupAirports
+
+actor "Backoffice Operator" as BO
+participant "System" as SYS
+
+BO -> SYS : GET /api/airports/grouped?by={criteria}
+SYS --> BO : 200 OK\n{Map<criteria, [airportDTO,...]>}
+
+@enduml

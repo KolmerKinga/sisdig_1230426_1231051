@@ -1,0 +1,35 @@
+
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+
+title Diagrama de Sequência do Sistema (SSD) - US113
+
+actor "ATCC" as User
+participant "Sistema" as System
+
+activate User
+
+User -> System : Autenticar Utilizador
+activate System
+System --> User : Autenticação Bem-sucedida (Token JWT)
+deactivate System
+
+User -> System : obterRotasDoAeroporto(airportIATA)
+activate System
+
+System --> User : Informar Sucesso (200 OK + Lista de Rotas)
+
+System --> User : Erro (404 Não Encontrado)
+deactivate System
+
+User -> System : obterDetalhesRota(routeId)
+activate System
+
+System --> User : Informar Sucesso (200 OK + Detalhes da Rota)
+
+System --> User : Erro (404 Não Encontrado)
+deactivate System
+
+deactivate User
+@enduml

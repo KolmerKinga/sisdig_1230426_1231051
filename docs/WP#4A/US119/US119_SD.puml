@@ -1,0 +1,28 @@
+@startuml SD_US119_UpdateMaintenanceRecord
+
+actor "Maintenance Technician" as TECH
+participant "MaintenanceController" as CTRL
+participant "MaintenanceService" as SVC
+participant "MaintenanceRecordRepository" as REPO
+participant "MaintenanceRecord" as RECORD
+
+TECH -> CTRL : PATCH /maintenance/{id}/complete\n[JWT: MAINTENANCE_TECHNICIAN]\n{completionNotes}
+
+CTRL -> CTRL : validar JWT + role
+CTRL -> SVC : completeMaintenance(recordId, notes)
+
+SVC -> REPO : findById(recordId)
+REPO --> SVC : MaintenanceRecord (@version=N)
+
+SVC -> RECORD : markAsCompleted(notes, now)
+RECORD --> SVC : OK
+
+SVC -> REPO : save(record)\n[@Version optimistic locking]
+REPO --> SVC : record (@version=N+1)
+
+SVC -> SVC : map → MaintenanceRecordDTO
+SVC --> CTRL : MaintenanceRecordDTO
+
+CTRL --> TECH : 200 OK\n{recordDTO + HATEOAS links}
+
+@enduml

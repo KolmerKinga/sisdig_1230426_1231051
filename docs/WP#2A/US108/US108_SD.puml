@@ -1,0 +1,22 @@
+@startuml US108_SearchAirports
+
+actor "ATCC" as USER
+participant "AirportController" as CTRL
+participant "AirportService" as SVC
+participant "AirportRepository" as REPO
+
+USER -> CTRL : GET /api/airports?city=X&country=Y&name=Z\n[JWT: ATCC]
+
+CTRL -> CTRL : validar JWT + role
+CTRL -> SVC : searchAirports(city, country, name)
+
+SVC -> SVC : validar parâmetros de pesquisa
+SVC -> REPO : findByCriteria(city, country, name)
+REPO --> SVC : List<Airport>
+
+SVC -> SVC : map → List<AirportDTO>
+SVC --> CTRL : List<AirportDTO>
+
+CTRL --> USER : 200 OK\n{[airportDTO,...] + HATEOAS links}
+
+@enduml

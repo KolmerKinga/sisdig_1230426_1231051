@@ -1,0 +1,34 @@
+@startuml
+
+actor "Backoffice Operator" as BO
+
+participant ":AuthController" as Auth
+participant "ModelCatalogController" as CC
+participant "AddModelUseCase" as AMC
+participant "AircraftModel" as AM
+participant "AircraftModelRepository" as AMR
+
+BO -> Auth : Authenticate User
+activate Auth
+Auth --> BO : Authentication Successful (Token JWT)
+deactivate Auth
+
+BO -> CC : POST /aircraft-models\n{ modelName, manufacturer,\n aircraftModelSpecs, modelImage }
+activate CC
+
+CC -> AMC : execute(model)
+activate AMC
+
+AMC -> AMR : save(model)
+activate AMR
+
+AMR --> AMC : persisted(model)
+deactivate AMR
+
+AMC --> CC : model saved
+deactivate AMC
+
+CC --> BO : 201 CREATED
+deactivate CC
+
+@enduml

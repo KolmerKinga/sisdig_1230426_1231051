@@ -1,0 +1,16 @@
+@startuml
+actor "ATCC" as BO
+participant "System" as Sys
+
+BO -> Sys: Authenticate User
+Sys --> BO: Authentication Successful
+
+BO -> Sys: Searches for the routes available for a specific aircraft
+
+alt Routes exist
+    Sys --> BO: Returns the list of Routes
+else Routes not found
+    Sys --> BO: Inform that there is not routes for that aircraft
+end
+
+@enduml

@@ -1,0 +1,24 @@
+@startuml US207_RegisterEnhancedAirport
+
+actor "Backoffice Operator" as BO
+participant "AirportController" as CTRL
+participant "AirportService" as SVC
+participant "AirportRepository" as REPO
+
+BO -> CTRL : POST /api/airports\n[JWT: BACKOFFICE_OPERATOR]\n{iataCode, airportType, name, status,\noperationalHours, location, facilities,\nrunways, certifications, contacts, airportPhotos}
+
+CTRL -> CTRL : validar JWT e role (BACKOFFICE_OPERATOR)
+CTRL -> CTRL : mapear request para Airport
+
+CTRL -> SVC : execute(airport)
+
+SVC -> SVC : validateIataCode(iataCode)
+SVC -> REPO : findByIataCode(iataCode)
+REPO --> SVC : null (não existe)
+
+SVC -> REPO : save(airport)
+REPO --> SVC : Airport (persistido)
+
+CTRL --> BO : 201 Created
+
+@enduml

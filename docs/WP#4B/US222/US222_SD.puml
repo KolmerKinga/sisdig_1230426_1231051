@@ -1,0 +1,42 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+
+title Sequence Diagram - US222
+
+actor "ATCC" as ATCC
+participant "MaintenanceRecordController" as CTRL
+participant "MaintenanceAlertService" as SVC
+participant "AircraftRepository" as AIRCRAFT_REPO
+participant "MaintenanceRecordRepository" as MAINT_REPO
+
+ATCC -> CTRL : GET /api/maintenance/alerts\n?calendarDaysThreshold=X&flightHoursThreshold=Y
+activate CTRL
+
+CTRL -> SVC : findAircraftDueForMaintenance(calendarDaysThreshold, flightHoursThreshold)
+activate SVC
+
+SVC -> AIRCRAFT_REPO : findAll()
+activate AIRCRAFT_REPO
+AIRCRAFT_REPO --> SVC : List<Aircraft>
+deactivate AIRCRAFT_REPO
+
+SVC -> MAINT_REPO : findByStatus(COMPLETED)
+activate MAINT_REPO
+MAINT_REPO --> SVC : List<MaintenanceRecord>
+deactivate MAINT_REPO
+
+note right of SVC
+  For each aircraft:
+  1. Find most recent completed maintenance.
+  2. Alert if never maintained.
+  3. Alert if days since last maintenance >= calendarDaysThreshold.
+  4. Alert if totalFlightHours >= flightHoursThreshold.
+end note
+
+SVC --> CTRL : List<MaintenanceAlert>
+deactivate SVC
+
+CTRL --> ATCC : 200 OK + List<MaintenanceAlertResponse>
+deactivate CTRL
+@enduml

@@ -1,0 +1,21 @@
+@startuml SD_US117_ViewTotalMaintenanceHours
+
+actor "ATCC" as USER
+participant "MaintenanceController" as CTRL
+participant "MaintenanceService" as SVC
+participant "MaintenanceRecordRepository" as REPO
+
+USER -> CTRL : GET /maintenance/aircraft/{reg}/hours\n[JWT: ATCC]
+
+CTRL -> CTRL : validar JWT + role
+CTRL -> SVC : getTotalMaintenanceHours(registration)
+
+SVC -> REPO : findByAircraftRegistration(registration)
+REPO --> SVC : List<MaintenanceRecord>
+
+SVC -> SVC : calcular horas totais\n(sum(end - start))
+SVC --> CTRL : TotalHoursDTO
+
+CTRL --> USER : 200 OK\n{totalHours + HATEOAS links}
+
+@enduml

@@ -1,0 +1,28 @@
+@startuml US208_UpdateAirportDetails
+
+actor "Backoffice Operator" as BO
+participant "AirportController" as CTRL
+participant "AirportService" as SVC
+participant "AirportRepository" as REPO
+
+BO -> CTRL : PATCH /api/airports/{iataCode}/details\n[JWT: BACKOFFICE_OPERATOR]\n{name, operationalHours, contacts}
+
+CTRL -> CTRL : validar JWT e role (BACKOFFICE_OPERATOR)
+CTRL -> CTRL : mapear contacts para List<Contact>
+
+CTRL -> SVC : updateDetails(iataCode, name, operationalHours, contacts)
+
+SVC -> REPO : findByIataCode(iataCode)
+REPO --> SVC : Airport
+
+SVC -> SVC : airport.updateDetails(name, operationalHours, contacts)
+
+SVC -> REPO : save(airport)
+REPO --> SVC : Airport (atualizado)
+
+SVC --> CTRL : Airport
+CTRL -> CTRL : map Airport → AirportResponse
+
+CTRL --> BO : 200 OK\n{airportDTO}
+
+@enduml

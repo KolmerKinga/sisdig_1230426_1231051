@@ -1,0 +1,11 @@
+@startuml
+actor "Maintenance Technician" as BO
+participant "System" as Sys
+
+BO -> Sys: Authenticate User
+Sys --> BO: Authentication Successful
+
+BO -> Sys: Search maintenance records by aircraft, date range, or maintenance component
+Sys --> BO: Returns the records that match the filtering
+
+@enduml

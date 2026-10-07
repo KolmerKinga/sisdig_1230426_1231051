@@ -1,0 +1,29 @@
+@startuml US106_RegisterAirport
+
+actor "Backoffice Operator" as BO
+participant "AirportController" as CTRL
+participant "AirportService" as SVC
+participant "AirportFactory" as FACT
+participant "AirportRepository" as REPO
+
+BO -> CTRL : POST /api/airports\n[JWT: BACKOFFICE_OPERATOR]\n{iataCode, name, type,\ntimezone, location, runways}
+
+CTRL -> CTRL : validar JWT e role (BACKOFFICE_OPERATOR)
+
+CTRL -> SVC : createAirport(dto)
+
+SVC -> SVC : validar formato IATA (3 letras maiúsculas)
+SVC -> REPO : findByIataCode(iataCode)
+REPO --> SVC : null (não existe)
+
+SVC -> FACT : create(dto)\n(criação do agregado Airport)
+FACT --> SVC : Airport (aggregate root)
+
+SVC -> REPO : save(airport)
+REPO --> SVC : Airport (persistido)
+
+SVC --> CTRL : AirportDTO
+
+CTRL --> BO : 201 Created\n{airportDTO + HATEOAS links}
+
+@enduml

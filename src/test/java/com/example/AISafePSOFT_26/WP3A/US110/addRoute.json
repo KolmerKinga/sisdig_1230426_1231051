@@ -1,0 +1,11 @@
+{
+  "routeName": "LIS-OPO",
+  "originIataCode": "LIS",
+  "destinationIataCode": "OPO",
+  "estimatedFlightTimeHours": 0.9,
+  "type": "DIRECT",
+  "requirements": {
+    "requiredRange": 3200.0,
+    "requiredCapacity": 160
+  }
+}

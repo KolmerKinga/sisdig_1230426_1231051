@@ -1,0 +1,9 @@
+@startuml SSD_US108_SearchAirports
+
+actor "ATCC" as USER
+participant "System" as SYS
+
+USER -> SYS : GET /api/airports?city=X&country=Y&name=Z
+SYS --> USER : 200 OK\n{[airportDTO,...] + links}
+
+@enduml

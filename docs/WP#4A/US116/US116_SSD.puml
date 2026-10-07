@@ -1,0 +1,25 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+
+title Diagrama de Sequência do Sistema (SSD) - US116
+
+actor "Técnico de Manutenção" as User
+participant "Sistema" as System
+
+activate User
+
+User -> System : Autenticar Utilizador
+activate System
+System --> User : Autenticação Bem-sucedida (Token JWT)
+deactivate System
+
+User -> System : registarAtividadeManutencao(matriculaAeronave, templateId, data, tecnicos, estado, notas)
+activate System
+
+System --> User : Informar Sucesso (201 Criado + Dados da Atividade)
+System --> User : Erro (400 Pedido Inválido / 404 Não Encontrado)
+
+deactivate System
+deactivate User
+@enduml

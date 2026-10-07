@@ -1,0 +1,33 @@
+@startuml
+
+actor "Backoffice Operator" as BO
+
+participant ":AuthController" as Auth
+participant "ModelCatalogController" as CC
+participant "FlightSearchService" as FSS
+participant "FlightRepository" as FR
+
+
+BO -> Auth : Authenticate User
+activate Auth
+Auth --> BO : Authentication Successful (Token JWT)
+deactivate Auth
+BO -> CC : GET /catalog/rankings?mode="assignments"
+activate CC
+
+CC -> FSS : findMostAssignedAircraftToFly()
+activate FSS
+    FSS -> FR : findAll()
+    activate FR
+    FR --> FSS : all flights
+    deactivate FR
+    FSS->FSS: group aircraft and the number of flights
+FSS --> CC : returns the grouped list
+CC->CC: groups the models and the number of flights
+deactivate FSS
+
+
+
+CC-->BO: 200 models
+deactivate CC
+@enduml

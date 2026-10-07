@@ -1,0 +1,9 @@
+@startuml SSD_US117_ViewTotalMaintenanceHours
+
+actor "ATCC" as USER
+participant "System" as SYS
+
+USER -> SYS : GET /api/maintenance/aircraft/{registration}/hours
+SYS --> USER : 200 OK\n{totalMaintenanceHours}
+
+@enduml

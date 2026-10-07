@@ -1,0 +1,33 @@
+@startuml US106a_AddCertification
+
+actor "Backoffice Operator / ATCC" as USER
+participant "AirportController" as CTRL
+participant "AirportService" as SVC
+participant "AirportRepository" as AREPO
+participant "AircraftModelRepository" as AMREPO
+participant "Airport" as AIRPORT
+
+USER -> CTRL : POST /api/airports/{iata}/certifications\n[JWT válido]\n{modelName, startAt, expiresAt}
+
+CTRL -> CTRL : validar JWT + role
+CTRL -> SVC : addCertification(iataCode, dto)
+
+SVC -> AREPO : findByIataCode(iataCode)
+AREPO --> SVC : Airport
+
+SVC -> AMREPO : findByModelName(modelName)
+AMREPO --> SVC : AircraftModel
+
+SVC -> SVC : criar Certification (VO)
+SVC -> AIRPORT : addCertification(certification)
+AIRPORT --> SVC : OK
+
+SVC -> AREPO : save(airport)
+AREPO --> SVC : Airport atualizado
+
+SVC -> SVC : map → CertificationDTO
+SVC --> CTRL : CertificationDTO
+
+CTRL --> USER : 201 Created\n{certificationDTO + HATEOAS links}
+
+@enduml

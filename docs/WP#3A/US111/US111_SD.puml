@@ -1,0 +1,46 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+
+title Diagrama de Sequência: US111 - Consultar Histórico de Rotas
+
+actor "ATCC" as User
+participant ":ControladorAutenticacao" as Auth
+participant ":ControladorRota" as Ctrl
+participant ":ServicoRota" as Service
+participant ":RepositorioRota" as RepoRoute
+participant "rota:Rota" as Route <<Raiz do Agregado>>
+
+activate User
+
+User -> Auth : Autenticar Utilizador
+activate Auth
+Auth --> User : Token JWT
+deactivate Auth
+
+User -> Ctrl : obterHistoricoRota(routeId)
+activate Ctrl
+
+Ctrl -> Service : obterHistoricoRota(routeId)
+activate Service
+
+    Service -> RepoRoute : procurarPorId(routeId)
+    activate RepoRoute
+    RepoRoute --> Service : rota
+    deactivate RepoRoute
+
+    Service -> Route : obterHistoricoRota()
+    activate Route
+    Route --> Service : lista<RouteHistory>
+    deactivate Route
+
+    Service --> Ctrl : listaRouteHistoryDTO
+
+    Ctrl --> User : Sucesso (200 OK + Ligações do Histórico)
+
+    Ctrl --> User : Erro (404 Não Encontrado)
+
+deactivate Service
+deactivate Ctrl
+deactivate User
+@enduml

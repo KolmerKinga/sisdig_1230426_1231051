@@ -1,0 +1,27 @@
+@startuml
+
+actor "ATCC" as User
+participant Controller
+participant AircraftSearchService
+participant AircraftRepository
+
+User -> Controller: GET /operational-hours?page=0&size=5
+
+Controller -> Controller: PageRequest.of(page, size, sort DESC totalOperationalHours)
+
+Controller -> AircraftSearchService: findPages(pageable)
+
+AircraftSearchService -> AircraftRepository: findAll(pageable)
+AircraftRepository --> AircraftSearchService: Page<Aircraft>
+
+AircraftSearchService --> Controller: Page<Aircraft>
+
+Controller -> Controller: extract page.getContent()
+
+loop for each Aircraft in page content
+    Controller -> Controller: map registrationNumber -> totalOperationalHours
+end
+
+Controller --> User: 200 LinkedHashMap JSON
+
+@enduml

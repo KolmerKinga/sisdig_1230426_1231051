@@ -1,0 +1,18 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+
+title Sequence Diagram - US216
+
+actor "ATCC" as ATCC
+participant "RouteController" as CTRL
+participant "RouteService" as SVC
+participant "RouteRepository" as REPO
+
+ATCC -> CTRL : searchAlternativeRoutes(origin, destination)
+CTRL -> SVC : searchAlternativeRoutes(origin, destination)
+SVC -> REPO : findAll(active origin/destination spec)
+REPO --> SVC : List<Route>
+SVC --> CTRL : List<Route>
+CTRL --> ATCC : 200 OK + RouteResponse list
+@enduml

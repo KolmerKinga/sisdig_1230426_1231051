@@ -1,0 +1,38 @@
+@startuml
+
+actor "Backoffice Operator" as BO
+
+participant ":AuthController" as Auth
+participant "ModelCatalogController" as CC
+participant "AircraftModelSearchService" as AMS
+participant "AircraftModelUpdater" as AMU
+participant "AircraftModelRepository" as AMR
+
+BO -> Auth : Authenticate User
+activate Auth
+Auth --> BO : Authentication Successful (Token JWT)
+deactivate Auth
+
+BO -> CC : PATCH /api/catalog/model/{modelName}\n{ modelName,modelImage, manufacturer,\n aircraftModelSpecs}
+activate CC
+
+CC -> AMS : spotAircraftInCatalog(modelName)
+activate AMS
+
+AMS -> AMR : findByModelName(modelName)
+activate AMR
+
+AMR --> AMS : model
+deactivate AMR
+
+AMS --> CC : model
+deactivate AMS
+
+CC-> AMU: aircraftModelUpdate(model,modelImage,manufacturer,\n\t fuelCapacityLiters,maximumRangeKm,cruisingSpeedKph,\n\t standardSeatingCapacity)
+activate AMU
+AMU-->CC
+deactivate AMU
+CC --> BO : 200 UPDATED
+deactivate CC
+
+@enduml

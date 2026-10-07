@@ -1,0 +1,9 @@
+@startuml SSD_US209_GetAirportRoutes
+
+actor "Backoffice Operator / ATCC" as USER
+participant "System" as SYS
+
+USER -> SYS : GET /api/airports/{iataCode}/routes
+SYS --> USER : 200 OK\n{[routeDTO,...]}
+
+@enduml

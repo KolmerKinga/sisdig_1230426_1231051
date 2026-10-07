@@ -1,0 +1,22 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+
+title System Sequence Diagram (SSD) - US212
+
+actor "ATCC" as ATCC
+participant "System" as SYS
+
+ATCC -> SYS : POST /api/flights/scheduled\n{routeId, aircraftRegistrationNumber,\nscheduledDeparture, scheduledArrival}
+activate SYS
+
+alt Route, aircraft and airports are available and compatible
+    SYS --> ATCC : 201 Created + Scheduled Flight
+else Invalid availability or range
+    SYS --> ATCC : 400 Bad Request
+else Route or aircraft not found
+    SYS --> ATCC : 404 Not Found
+end
+
+deactivate SYS
+@enduml

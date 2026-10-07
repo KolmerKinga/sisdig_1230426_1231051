@@ -1,0 +1,31 @@
+@startuml
+
+actor "ATCC" as BO
+
+participant ":AuthController" as Auth
+participant "HangarController" as CC
+participant "AircraftSearchService" as ASS
+participant "AircraftRepository" as AR
+
+BO -> Auth : Authenticate User
+activate Auth
+Auth --> BO : Authentication Successful (Token JWT)
+deactivate Auth
+
+BO -> CC : GET /api/hangar/status-summary
+activate CC
+loop for each AircraftAvailability status
+    CC -> ASS: countByAvailability(status)
+    activate ASS
+    ASS -> AR: query COUNT by status
+    activate AR
+    AR --> ASS: count
+    deactivate AR
+end
+ASS-->CC: Map<status, count>
+deactivate ASS
+
+CC --> BO : 200 JSON
+deactivate CC
+
+@enduml

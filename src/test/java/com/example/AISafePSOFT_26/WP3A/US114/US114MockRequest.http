@@ -1,0 +1,22 @@
+POST http://localhost:8081/auth/login
+Content-Type: application/json
+
+{
+  "username": "atcc",
+  "password": "atcc123"
+}
+
+###
+@token=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzZWM2ZDc1YS1hOTI0LTQ0YTAtYjQ0NS01MTAxMzBlOTQxYWQiLCJyb2xlcyI6WyJBVENDIl0sImlhdCI6MTc3OTg4MDE1NCwiZXhwIjoxNzc5ODgzNzU0fQ.-WRz9u6Ek6E7WhW--Vzd4H7MoA76yymCv2wQ6xGTaOo
+
+###
+GET http://localhost:8081/api/routes?origin=LIS&destination=OPO
+Authorization: Bearer {{token}}
+
+###
+GET http://localhost:8081/api/routes?origin=LIS
+Authorization: Bearer {{token}}
+
+###
+GET http://localhost:8081/api/routes?destination=OPO
+Authorization: Bearer {{token}}

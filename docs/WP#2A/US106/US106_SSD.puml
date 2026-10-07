@@ -1,0 +1,9 @@
+@startuml SSD_US106_RegisterAirport
+
+actor "Backoffice Operator" as BO
+participant "System" as SYS
+
+BO -> SYS : POST /api/airports\n{iataCode, name, type, timezone,\nlocation, runways}
+SYS --> BO : 201 Created\n{airportDTO + links}
+
+@enduml

@@ -1,0 +1,18 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+
+title Sequence Diagram - US219
+
+actor "Maintenance Supervisor" as User
+participant "MaintenanceRecordController" as Ctrl
+participant "MaintenanceReportService" as Service
+participant "MaintenanceRecordRepository" as Repo
+
+User -> Ctrl : ongoingMaintenanceActivities()
+Ctrl -> Service : ongoingMaintenanceActivities()
+Service -> Repo : findByStatus(ONGOING)
+Repo --> Service : List<MaintenanceRecord>
+Service --> Ctrl : List<MaintenanceRecord>
+Ctrl --> User : 200 OK + MaintenanceRecordResponse list
+@enduml

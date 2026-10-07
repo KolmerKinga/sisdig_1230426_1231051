@@ -1,0 +1,9 @@
+@startuml SSD_US119_UpdateMaintenanceRecord
+
+actor "Maintenance Technician" as TECH
+participant "System" as SYS
+
+TECH -> SYS : PATCH /api/maintenance/{recordId}/complete\n{completionNotes}
+SYS --> TECH : 200 OK\n{updatedMaintenanceRecordDTO}
+
+@enduml

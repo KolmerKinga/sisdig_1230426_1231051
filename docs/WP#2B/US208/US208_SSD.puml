@@ -1,0 +1,9 @@
+@startuml SSD_US208_UpdateAirportDetails
+
+actor "Backoffice Operator" as BO
+participant "System" as SYS
+
+BO -> SYS : PATCH /api/airports/{iataCode}/details\n{name, operationalHours, contacts}
+SYS --> BO : 200 OK\n{airportDTO}
+
+@enduml

@@ -1,0 +1,29 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+
+title Sequence Diagram - US212
+
+actor "ATCC" as ATCC
+participant "FlightController" as CTRL
+participant "AircraftSearchService" as AIRCRAFTS
+participant "RouteService" as ROUTES
+participant "RouteRepository" as ROUTEREPO
+participant "FlightRepository" as FLIGHTREPO
+participant "Flight" as FLIGHT
+
+ATCC -> CTRL : scheduleFlight(request)
+CTRL -> AIRCRAFTS : spotAircraftInHangar(registration)
+AIRCRAFTS --> CTRL : Aircraft
+CTRL -> ROUTES : scheduleFlight(routeId, aircraft, departure, arrival)
+ROUTES -> ROUTEREPO : findByRouteId(routeId)
+ROUTEREPO --> ROUTES : Route
+ROUTES -> FLIGHTREPO : existsByAircraft...overlap(...)
+FLIGHTREPO --> ROUTES : false
+ROUTES -> FLIGHT ** : <<create>>
+ROUTES -> ROUTEREPO : save(route with usage + 1)
+ROUTES -> FLIGHTREPO : save(flight)
+FLIGHTREPO --> ROUTES : Flight
+ROUTES --> CTRL : Flight
+CTRL --> ATCC : 201 Created + FlightResponse
+@enduml

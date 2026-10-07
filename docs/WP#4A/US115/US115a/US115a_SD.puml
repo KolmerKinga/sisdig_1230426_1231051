@@ -1,0 +1,59 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+
+title Sequence Diagram: US116 - Log Maintenance Activity
+
+actor "Maintenance Technician" as User
+participant ":AuthController" as Auth
+participant ":MaintenanceRecordController" as Ctrl
+participant ":AircraftSearchService" as aircraftSearchService
+participant ":MaintenanceTemplateSearchService" as maintenanceTemplateSearchService
+participant ":AircraftRepository" as RepoAircraft
+participant ":MaintenanceTemplateRepository" as RepoTemplate
+participant ":AddMaintenanceRecordUseCase" as AddUse
+participant ":MaintenanceRecordRepository" as recordRepo
+
+activate User
+
+User -> Auth : Authenticate User
+activate Auth
+Auth --> User : Authentication Successful (Token JWT)
+deactivate Auth
+
+
+User -> Ctrl : addRecord(AddRecordShortRequest request)
+activate Ctrl
+
+Ctrl -> aircraftSearchService : spotAircraftInHangar(registrationNumber)
+activate aircraftSearchService
+
+aircraftSearchService -> RepoAircraft :findByRegistrationNumber(registrationNumber)
+activate RepoAircraft
+RepoAircraft --> aircraftSearchService : Optional<Aircraft>
+deactivate RepoAircraft
+aircraftSearchService-->Ctrl : Optional<Aircraft>
+deactivate aircraftSearchService
+
+
+Ctrl -> maintenanceTemplateSearchService : findByTemplateId(recordId)
+activate maintenanceTemplateSearchService
+    maintenanceTemplateSearchService ->RepoTemplate: findByTemplateId(recordId)
+        activate RepoTemplate
+        RepoTemplate-->maintenanceTemplateSearchService: Optional<MaintenanceRecord>
+        deactivate RepoTemplate
+maintenanceTemplateSearchService-->Ctrl: Optional<MaintenanceRecord>
+deactivate maintenanceTemplateSearchService
+
+Ctrl-> AddUse:executeShort(aircraft,maintenanceTemplate,durationHours,description,startDate)
+activate AddUse
+    AddUse->recordRepo: save(record)
+    AddUse-->Ctrl
+deactivate AddUse
+
+Ctrl --> User : Success (201)
+Ctrl --> User : Error
+
+deactivate Ctrl
+deactivate User
+@enduml

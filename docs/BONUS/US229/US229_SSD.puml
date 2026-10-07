@@ -1,0 +1,10 @@
+@startuml
+title US229 - Route Utilization Report SSD
+
+actor "ATCC" as ATCC
+participant "AISafePSOFT" as SYS
+
+ATCC -> SYS : GET /api/flights/reports/route-utilization
+SYS --> ATCC : 200 OK + routes ordered by flight count
+
+@enduml

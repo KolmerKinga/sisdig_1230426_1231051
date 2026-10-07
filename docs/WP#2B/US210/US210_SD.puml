@@ -1,0 +1,23 @@
+@startuml US210_BusiestAirports
+
+actor "Backoffice Operator" as BO
+participant "AirportController" as CTRL
+participant "AirportService" as SVC
+participant "RouteRepository" as ROUTEREPO
+
+BO -> CTRL : GET /api/airports/busiest
+
+CTRL -> SVC : busiestAirports()
+
+SVC -> ROUTEREPO : findAll()
+ROUTEREPO --> SVC : List<Route>
+
+SVC -> SVC : contar rotas por aeroporto (origem + destino)
+SVC -> SVC : ordenar por numberOfRoutes (desc)
+
+SVC --> CTRL : List<AirportRouteStatistic>
+CTRL -> CTRL : map → List<AirportRouteStatisticResponse>
+
+CTRL --> BO : 200 OK\n{[{iataCode, name, numberOfRoutes},...]}
+
+@enduml

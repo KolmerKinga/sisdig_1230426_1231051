@@ -1,0 +1,17 @@
+@startuml
+title US229 - Route Utilization Report SD
+
+actor "ATCC" as ATCC
+participant "FlightController" as CTRL
+participant "FlightUtilizationReportService" as SVC
+participant "FlightRepository" as REPO
+
+ATCC -> CTRL : GET /api/flights/reports/route-utilization
+CTRL -> SVC : getRouteUtilizationReport()
+SVC -> REPO : findAll()
+REPO --> SVC : flights
+SVC -> SVC : group by route and count flights
+SVC --> CTRL : route utilization report
+CTRL --> ATCC : 200 OK
+
+@enduml

@@ -1,0 +1,18 @@
+POST http://localhost:8081/auth/login
+Content-Type: application/json
+
+{
+  "username": "atcc",
+  "password": "atcc123"
+}
+
+### gets the utilization rendered in a graph - 1201107
+
+###
+
+@token = eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI1NTdlNTNkMS1iYjU5LTRhZjItYmFjZS01ZDM3MGI1YzAzYjAiLCJyb2xlcyI6WyJBVENDIl0sImlhdCI6MTc4MjA3MjcyMiwiZXhwIjoxNzgyMDc2MzIyfQ.JrBDbXa51zb2oW6PHeNiomxIEnuElYC7cGQNpwtDNUE
+
+
+GET http://localhost:8081/api/hangar/view/utilization
+Content-Type: application/json
+Authorization: Bearer {{token}}

@@ -1,0 +1,9 @@
+@startuml SSD_US207_RegisterEnhancedAirport
+
+actor "Backoffice Operator" as BO
+participant "System" as SYS
+
+BO -> SYS : POST /api/airports\n{iataCode, airportType, name, status,\noperationalHours, location, facilities,\nrunways, certifications, contacts, airportPhotos}
+SYS --> BO : 201 Created
+
+@enduml

@@ -1,0 +1,41 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+
+title Diagrama de Sequência: US114 - Pesquisar Rotas
+
+actor "ATCC" as User
+participant ":ControladorAutenticacao" as Auth
+participant ":ControladorRota" as Ctrl
+participant ":ServicoRota" as Service
+participant ":RepositorioRota" as RepoRoute
+participant "rota:Rota" as Route <<Raiz do Agregado>>
+
+activate User
+
+User -> Auth : Autenticar Utilizador
+activate Auth
+Auth --> User : Autenticação Bem-sucedida (Token JWT)
+deactivate Auth
+
+User -> Ctrl : pesquisarRotas(origem, destino)
+activate Ctrl
+
+Ctrl -> Service : pesquisarRotas(origem, destino)
+activate Service
+
+    Service -> RepoRoute : procurarPorOrigemEDestino(origem, destino)
+    activate RepoRoute
+    RepoRoute --> Service : lista<Route>
+    deactivate RepoRoute
+
+    Service --> Ctrl : listaRouteDTO / Erro
+
+    Ctrl --> User : Sucesso (200 OK + Lista de Rotas Filtradas)
+
+    Ctrl --> User : Erro (400 Pedido Inválido)
+
+deactivate Service
+deactivate Ctrl
+deactivate User
+@enduml
