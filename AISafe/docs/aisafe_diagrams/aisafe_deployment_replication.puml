@@ -1,83 +1,87 @@
 @startuml
-' Sources: ZIP pom.xml, application.properties, application-dev.properties,
-' package/controller/repository analysis; SIDIS assignment, PL2, PL3;
-' output/arq_corrigida.puml.
-' Existing code: one Maven project and one Spring Boot application, not four
-' separately deployed services. Packages Aircraft/AircraftCatalog -> Aircraft;
-' Airport -> Airport; Route/Flight -> Route; Maintenance -> Maintenance.
-' The ZIP contains no Dockerfile/Compose configuration or inter-service client.
-' H2 per replica is an initial proposal using the existing database technology.
-' Hosts, eight future ports, peer URLs, separate builds and replica profiles TBD.
-title AISafe - Deployment and Replication\nProposed decomposition of the PSOFT monolith
+title AISafe - Deployment and Replication (Physical view)
+
 left to right direction
 skinparam monochrome true
 skinparam shadowing false
-skinparam componentStyle rectangle
-skinparam packageStyle rectangle
 skinparam defaultFontName SansSerif
-skinparam defaultFontSize 13
-skinparam ArrowFontSize 12
-skinparam NoteBackgroundColor white
+skinparam defaultFontSize 12
+skinparam ArrowFontSize 11
 
-node "Route / Flight Operations" as Route {
-  node "Replica A\nPort: TBD" as RA
-  node "Replica B\nPort: TBD" as RB
-  database "H2 local store A\nIndependent JVM" as RDA
-  database "H2 local store B\nIndependent JVM" as RDB
-  RA <--> RB : Peer HTTP GET
-  RA --> RDA : JPA
-  RB --> RDB : JPA
-}
-node "Aircraft Management" as Aircraft {
-  node "Replica A\nPort: TBD" as AA
-  node "Replica B\nPort: TBD" as AB
-  database "H2 local store A\nIndependent JVM" as ADA
-  database "H2 local store B\nIndependent JVM" as ADB
-  AA <--> AB : Peer HTTP GET
-  AA --> ADA : JPA
-  AB --> ADB : JPA
-}
-node "Airport Management" as Airport {
-  node "Replica A\nPort: TBD" as PA
-  node "Replica B\nPort: TBD" as PB
-  database "H2 local store A\nIndependent JVM" as PDA
-  database "H2 local store B\nIndependent JVM" as PDB
-  PA <--> PB : Peer HTTP GET
-  PA --> PDA : JPA
-  PB --> PDB : JPA
-}
-node "Maintenance Management" as Maintenance {
-  node "Replica A\nPort: TBD" as MA
-  node "Replica B\nPort: TBD" as MB
-  database "H2 local store A\nIndependent JVM" as MDA
-  database "H2 local store B\nIndependent JVM" as MDB
-  MA <--> MB : Peer HTTP GET
-  MA --> MDA : JPA
-  MB --> MDB : JPA
+actor "Client\n(Postman)" as Client
+
+node "Host: localhost (or Docker network aisafe-net)" as Host {
+
+  node "auth-service" as AuthSvc {
+    node "auth-1\nhttps://localhost:8051\nprofile: instance1" as AU1
+    node "auth-2\nhttps://localhost:8052\nprofile: instance2" as AU2
+    database "H2 mem\nauth1" as AUD1
+    database "H2 mem\nauth2" as AUD2
+    AU1 --> AUD1
+    AU2 --> AUD2
+  }
+
+  node "aircraft-service" as AircraftSvc {
+    node "aircraft-1\nhttps://localhost:8081\npeers: 8082" as AC1
+    node "aircraft-2\nhttps://localhost:8082\npeers: 8081" as AC2
+    database "H2 mem\naircraft1" as ACD1
+    database "H2 mem\naircraft2" as ACD2
+    AC1 --> ACD1
+    AC2 --> ACD2
+    AC1 <--> AC2 : peer forwarding\nHTTPS
+  }
+
+  node "airport-service" as AirportSvc {
+    node "airport-1\nhttps://localhost:8091\npeers: 8092" as AP1
+    node "airport-2\nhttps://localhost:8092\npeers: 8091" as AP2
+    database "H2 mem\nairport1" as APD1
+    database "H2 mem\nairport2" as APD2
+    AP1 --> APD1
+    AP2 --> APD2
+    AP1 <--> AP2 : peer forwarding\nHTTPS
+  }
+
+  node "route-flight-service" as RouteSvc {
+    node "route-1\nhttps://localhost:8071\npeers: 8072" as RF1
+    node "route-2\nhttps://localhost:8072\npeers: 8071" as RF2
+    database "H2 mem\nroute1" as RFD1
+    database "H2 mem\nroute2" as RFD2
+    RF1 --> RFD1
+    RF2 --> RFD2
+    RF1 <--> RF2 : peer forwarding\nHTTPS
+  }
+
+  node "maintenance-service" as MaintSvc {
+    node "maintenance-1\nhttps://localhost:8061\npeers: 8062" as MT1
+    node "maintenance-2\nhttps://localhost:8062\npeers: 8061" as MT2
+    database "H2 mem\nmaintenance1" as MTD1
+    database "H2 mem\nmaintenance2" as MTD2
+    MT1 --> MTD1
+    MT2 --> MTD2
+    MT1 <--> MT2 : peer forwarding\nHTTPS
+  }
 }
 
-Route --> Aircraft : HTTP/REST\nAircraft checks / metrics
-Route --> Airport : HTTP/REST\nAirport checks
-Route --> Maintenance : HTTP/REST\nMaintenance checks
-Maintenance --> Aircraft : HTTP/REST\nAircraft lookup
-Aircraft ..> Route : HTTP/REST\nQueries / statistics
-Airport ..> Route : HTTP/REST\nQueries / statistics
+Client --> AuthSvc : HTTPS\nPOST /auth/login -> JWT
+Client --> Host : HTTPS + JWT\nany replica of any service
+
+RouteSvc --> AircraftSvc : HTTPS/REST\nJWT + X-Service-Key
+RouteSvc --> AirportSvc : HTTPS/REST\nJWT + X-Service-Key
+RouteSvc --> MaintSvc : HTTPS/REST\nJWT + X-Service-Key
+MaintSvc --> AircraftSvc : HTTPS/REST\nJWT + X-Service-Key
 
 legend bottom left
-  Verified PSOFT baseline:
-  Java 17; Spring Boot 3.3.5; Spring Web, Data JPA and Security; Maven.
-  One project/application; current monolith port: 8081.
-  H2 in memory: jdbc:h2:mem:testdb; default profile: dev.
-  application-dev.properties uses ddl-auto=create; no Docker configuration.
-
-  Proposed deployment:
-  Each replica is a separate Spring Boot process with its own H2 store.
-  All eight service ports, host placement and replica profiles: TBD.
-  Use distinct ports when replicas share a host; no shared database.
-  Service-level arrows summarise calls between the respective replicas.
-  Peer arrows apply only within the same service; forwarding is not write sync.
-  Write synchronisation, conflict handling and data redundancy: TBD.
-  Inter-service authentication, TLS, access control and audit are required;
-  their distributed configuration remains TBD. No message queues.
+  10 independent Spring Boot processes: 5 services x 2 replicas, one Spring profile per replica
+  (application-instance1/2.properties: server.port, datasource URL, peer list, instance id).
+  Each replica owns its own in-memory H2 store; no data is shared or copied between replicas.
+  Data partitioning: a record lives on the replica that created it. Generated ids are UUIDs,
+  so ids never collide across replicas; natural keys (registration number, IATA code,
+  model name) are checked on peers before creation (409 if they already exist).
+  Calls between services: the caller holds the list of both provider replicas and fails over
+  to the second one if the first does not answer (connect 1 s, read 2 s).
+  TLS: server.ssl with a PKCS12 self-signed keystore (generated by scripts/gen-certs.sh,
+  not committed); every replica trusts it. Secrets (JWT key, service key) come from env vars.
+  auth-service replicas hold the same bootstrapped users, so they need no forwarding.
+  Optional: the same topology in docker-compose, using container names as hostnames.
 endlegend
 @enduml

@@ -1,58 +1,74 @@
 @startuml
-' Sources: PSOFT US106a, operational constraints and US212; SIDIS segregation;
-' FlightController, RouteService, HangarController, AirportController,
-' MaintenanceController, Certification and arq_corrigida.puml.
-' This is a target distributed workflow, not a trace of the existing monolith.
-' Current RouteService does not check capacity or query Maintenance directly.
-' AircraftResponse contains meanRange, but no complete range/capacity contract.
-' Airport Certification does not identify an AircraftModel (US106a gap).
-title AISafe - Create Scheduled Flight\nProposed HTTP/REST coordination
+title AISafe - Create Scheduled Flight (US212)\nCross-service coordination over HTTPS/REST
+
 skinparam monochrome true
 skinparam shadowing false
 skinparam defaultFontName SansSerif
-skinparam defaultFontSize 13
-skinparam ArrowFontSize 12
-skinparam NoteBackgroundColor white
+skinparam defaultFontSize 12
+skinparam ArrowFontSize 11
 skinparam sequenceMessageAlign center
 hide footbox
 autonumber
 
-actor "Client" as Client
-participant "Route / Flight\nOperations" as Route
-participant "Aircraft\nManagement" as Aircraft
-participant "Airport\nManagement" as Airport
-participant "Maintenance\nManagement" as Maintenance
+actor "ATCC" as Client
+participant "route-1\n:8071" as Route
+database "H2\nroute1" as RouteDB
+participant "route-2\n:8072" as Peer
+participant "aircraft-service\n(8081 / 8082)" as Aircraft
+participant "airport-service\n(8091 / 8092)" as Airport
+participant "maintenance-service\n(8061 / 8062)" as Maintenance
 
-Client -> Route : POST /api/flights/scheduled\nrouteId, aircraftRegistrationNumber,\nscheduledDeparture, scheduledArrival
+Client -> Route : POST /api/flights/scheduled\nJWT (role ATCC)\n{routeId, aircraftRegistrationNumber,\n scheduledDeparture, scheduledArrival}
 activate Route
-Route -> Route : Load local Route and scheduling requirements
-Route -> Aircraft : HTTP/REST - Validate aircraft\nExistence, operational status, range, capacity
-Aircraft --> Route : Aircraft information / validation outcome
+Route -> Route : validate JWT, role and input\n(arrival after departure)
+Route -> RouteDB : find Route by routeId
+note right of Route : if the route is not stored locally,\nit is fetched from route-2 (forwarding rule)
+Route -> Route : route must be ACTIVE;\nread requiredRange, requiredCapacity,\norigin and destination IATA codes
 
-Route -> Airport : GET /api/airports/{iataCode}\nOrigin airport
-Airport --> Route : Origin details / lookup outcome
-Route -> Airport : GET /api/airports/{iataCode}\nDestination airport
-Airport --> Route : Destination details / lookup outcome
-Route -> Route : Check airport status and certifications\nModel-to-airport eligibility: TBD
+Route -> Aircraft : GET /api/hangar/aircraft/{registrationNumber}\nJWT + X-Service-Key
+Aircraft --> Route : 200 {status, modelName,\nmaximumRangeKm, seatingCapacity}
 
-Route -> Maintenance : HTTP/REST - Check maintenance status\nAircraft maintenance-related availability
-Maintenance --> Route : Maintenance status / availability outcome
+Route -> Airport : GET /api/airports/{originIata}
+Airport --> Route : 200 {status, certifications}
+Route -> Airport : GET /api/airports/{destinationIata}
+Airport --> Route : 200 {status, certifications}
 
-Route -> Route : Evaluate collected information\nCheck range, capacity and aircraft status;\nroute active, valid times, no overlapping flights
-alt All validations satisfied
-  Route -> Route : Create and save Flight (ScheduledFlight)\nUpdate local RouteHistory
-  Route --> Client : HTTP 201 Created\nScheduled flight information
-else A validation fails
-  Route --> Client : Validation failure with reason\nHTTP 409 for business-rule conflicts
+Route -> Maintenance : GET /api/maintenance/aircraft/{registrationNumber}/ongoing
+Maintenance --> Route : 200 {underMaintenance: false}
+
+group Overlap check across replicas (aggregation)
+  Route -> RouteDB : flights of aircraft in [departure, arrival]
+  Route -> Peer : GET /api/flights/aircraft/{registrationNumber}\nX-Forwarded-By: route-1 + X-Service-Key
+  Peer --> Route : 200 flights stored on route-2
+end
+
+alt All checks pass
+  Route -> RouteDB : save Flight (UUID, status SCHEDULED)\n+ increment RouteHistory (same local transaction)
+  Route -> Route : audit log: user, action, flightId, instance
+  Route --> Client : 201 Created + Location /api/flights/{id}
+else Business rule violated
+  note over Route
+    aircraft not AVAILABLE, under maintenance,
+    range < requiredRange, capacity < requiredCapacity,
+    airport not OPERATIONAL or overlapping flight
+  end note
+  Route --> Client : 409 Conflict + reason
+else Aircraft, airport or route not found
+  Route --> Client : 404 Not Found + which resource
+else Provider service or route peer unreachable (both replicas, after retries)
+  Route --> Client : 503 Service Unavailable\n(flight NOT created)
 end
 deactivate Route
 
 legend bottom left
-  POST and airport GET paths exist in PSOFT; remote calls are proposed.
-  Aircraft GET /api/hangar/aircraft/{registrationNumber} exists,
-  but the full range/capacity contract is TBD: validation is conceptual.
-  Maintenance GET /api/maintenance/records?aircraft={registrationNumber}
-  exists; the availability-check contract is TBD.
-  Each service accesses only its own data and repositories.
+  The provider replica that receives each call may itself forward it to its peer
+  (aircraft, airport and maintenance data are partitioned between replicas).
+  Calls to another service try replica 1 first and fail over to replica 2 (connect 1 s, read 2 s).
+  Reads favour availability, but creating a flight requires complete answers: if a check
+  cannot be completed the write is refused (503) instead of risking an unsafe assignment.
+  Contracts added for SIDIS: AircraftResponse gains maximumRangeKm and seatingCapacity;
+  maintenance-service exposes GET /api/maintenance/aircraft/{registrationNumber}/ongoing.
+  Known limitation: airport Certification does not reference an aircraft model (PSOFT US106a),
+  so model-to-airport eligibility is not validated; only airport status is checked.
 endlegend
 @enduml

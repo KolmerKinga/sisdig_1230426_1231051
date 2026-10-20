@@ -1,143 +1,65 @@
 @startuml
-title AISafe Flight Management System\nProposed Distributed Architecture (4 services)
+title AISafe Flight Management System\nDistributed Architecture - Container view (C4 Level 2)
 
 left to right direction
 skinparam shadowing false
 skinparam componentStyle rectangle
 skinparam packageStyle rectangle
 skinparam defaultTextAlignment center
+skinparam defaultFontName SansSerif
+skinparam ArrowFontSize 11
 
-actor "Client / Frontend" as Client
+actor "Client\n(Postman / Frontend)\nBackoffice, ATCC,\nMaintenance staff" as Client
+
+package "Identity & Access (supporting)" as AuthPkg {
+  component "auth-service\nSpring Boot - HTTPS\n8051 / 8052\n\nPOST /auth/login\nissues JWT (username, roles)" as Auth
+  database "H2 per replica\nCollaborators" as AuthDB
+  Auth --> AuthDB : JPA
+}
 
 package "Aircraft Management" as AircraftPkg {
-  component "Aircraft Service\n\nMain concepts owned:\n- AircraftModel\n- Aircraft\n- AircraftAvailability\n- AircraftCertification\n\n2+ replicas" as Aircraft
-  database "Independent local store\nper replica" as AircraftDB
-  Aircraft --> AircraftDB
+  component "aircraft-service\nSpring Boot - HTTPS\n8081 / 8082\n\nAircraftModel, Aircraft,\nAircraftCertification" as Aircraft
+  database "H2 per replica\naircraft1 / aircraft2" as AircraftDB
+  Aircraft --> AircraftDB : JPA
 }
 
 package "Airport Management" as AirportPkg {
-  component "Airport Service\n\nMain concepts owned:\n- Airport\n- Runway\n- Facilities\n- Certification\n- AirportStatus\n\n2+ replicas" as Airport
-  database "Independent local store\nper replica" as AirportDB
-  Airport --> AirportDB
+  component "airport-service\nSpring Boot - HTTPS\n8091 / 8092\n\nAirport, Runway,\nFacilities, Certification" as Airport
+  database "H2 per replica\nairport1 / airport2" as AirportDB
+  Airport --> AirportDB : JPA
 }
 
 package "Route / Flight Operations" as RoutePkg {
-  component "Route / Flight Ops Service\n\nMain concepts owned:\n- Route\n- RouteHistory\n- Flight\n\n2+ replicas" as Route
-  database "Independent local store\nper replica" as RouteDB
-  Route --> RouteDB
+  component "route-flight-service\nSpring Boot - HTTPS\n8071 / 8072\n\nRoute, RouteHistory,\nFlight (scheduled flight)" as Route
+  database "H2 per replica\nroute1 / route2" as RouteDB
+  Route --> RouteDB : JPA
 }
 
 package "Maintenance Management" as MaintenancePkg {
-  component "Maintenance Service\n\nMain concepts owned:\n- MaintenanceTemplate\n- MaintenanceRecord\n\n2+ replicas" as Maintenance
-  database "Independent local store\nper replica" as MaintenanceDB
-  Maintenance --> MaintenanceDB
+  component "maintenance-service\nSpring Boot - HTTPS\n8061 / 8062\n\nMaintenanceTemplate,\nMaintenanceRecord" as Maintenance
+  database "H2 per replica\nmaintenance1 / maintenance2" as MaintenanceDB
+  Maintenance --> MaintenanceDB : JPA
 }
 
-Client --> Aircraft : HTTP/REST
-Client --> Airport : HTTP/REST
-Client --> Route : HTTP/REST
-Client --> Maintenance : HTTP/REST
+Client --> Auth : HTTPS\nPOST /auth/login
+Client --> Aircraft : HTTPS/REST + JWT
+Client --> Airport : HTTPS/REST + JWT
+Client --> Route : HTTPS/REST + JWT
+Client --> Maintenance : HTTPS/REST + JWT
 
-Route --> Aircraft : HTTP/REST\naircraft lookup, status,\nrange and capacity;\nupdate flight metrics
-Route --> Airport : HTTP/REST\nairport lookup, status\nand airport certifications
-Route --> Maintenance : HTTP/REST\nmaintenance status
-Maintenance --> Aircraft : HTTP/REST\naircraft lookup,\nmodel and flight hours
+Route --> Aircraft : HTTPS/REST\nGET aircraft (status, range, capacity)\nPATCH flight hours
+Route --> Airport : HTTPS/REST\nGET airport (status, certifications)
+Route --> Maintenance : HTTPS/REST\nGET ongoing maintenance of aircraft
+Maintenance --> Aircraft : HTTPS/REST\nGET aircraft (model, flight hours)\nPATCH availability (MAINTENANCE / AVAILABLE)
 
-Aircraft --> Route : HTTP/REST\ncompatible routes,\nflight queries and statistics
-Airport --> Route : HTTP/REST\nairport routes\nand route statistics
-
-rectangle "Replica collaboration pattern\n(applies inside every service)" as Replication {
-  component "Replica A" as RA
-  component "Replica B" as RB
-  database "Local Store A" as RDBA
-  database "Local Store B" as RDBB
-
-  RA <--> RB : peer-to-peer\nHTTP GET forwarding
-  RA --> RDBA
-  RB --> RDBB
-}
-
-note bottom of Replication
-Each replica first checks its local data.
-If the required data is missing or incomplete,
-it queries peers and returns a coherent response.
-Distributed collections may require aggregation
-of local and peer results, with duplicate handling.
-
-Forwarding must handle timeouts and unavailable
-peers, and prevent circular forwarding.
-
-GET forwarding retrieves data from peers.
-It does not, by itself, synchronize writes
-or guarantee eventual consistency.
-
-Consistency target: eventual consistency.
-Write synchronization, conflict resolution and
-data redundancy must be defined separately.
-end note
-
-note bottom of Route
-Route / Flight Operations owns routes and flights
-and coordinates cross-domain checks.
-Flight is the existing PSOFT entity used
-to represent scheduled flight operations.
-
-References to data owned by other services
-must use identifiers and HTTP/REST APIs,
-instead of cross-service JPA relationships
-or direct repository/database access.
-end note
-
-note as ArchitecturalRules
-Architectural rules:
-1. Clear business-domain ownership.
-2. No shared database between services.
-3. Independent local data store per replica.
-4. Inter-service communication via HTTP/REST.
-5. At least two replicas per service.
-6. Peer-to-peer GET forwarding and response aggregation.
-7. Inter-service authentication, HTTPS/TLS, RBAC and audit logging.
-8. No event-based communication or message queues in Assignment 1.
-
-The stores inside the service packages summarize
-the per-replica storage shown in the replica pattern.
-The arrows describe the proposed distributed APIs,
-including queries needed to preserve current endpoints.
-They do not imply that these APIs are already implemented.
-end note
-
-note as DDDExplanation
-DDD - Domain-Driven Design
-
-The proposed architecture groups related business responsibilities
-into four Bounded Contexts with explicit data ownership.
-
-- Aircraft Management:
-  Owns aircraft models, aircraft instances, aircraft availability
-  and aircraft certifications.
-
-- Airport Management:
-  Owns airports, runways, facilities, airport status
-  and airport certifications (Certification).
-
-- Route / Flight Operations:
-  Owns routes, route history and flights.
-
-- Maintenance Management:
-  Owns maintenance templates and maintenance records.
-
-AircraftCertification and Certification are distinct PSOFT classes.
-The current airport Certification entity does not identify an aircraft model;
-model-to-airport eligibility must be aligned with the original requirements.
-
-Each context owns its business logic and data.
-Cross-context interactions use well-defined HTTP/REST APIs.
-The concept lists show the main concepts, not every class.
-
-The four-service division is based on business responsibilities,
-data ownership and clear domain boundaries.
-Having four team members supports this organization,
-but was not the main criterion for defining the services.
-end note
-
+legend bottom left
+  Arrows point from consumer to provider. Dependencies are acyclic:
+  aircraft-service and airport-service never call other services.
+  Each container runs as 2 independent replicas (separate JVM, port and H2 store).
+  Replicas of the same service forward GET requests to each other (see deployment
+  and forwarding diagrams). No shared database. No message queues (Assignment 1).
+  Security: HTTPS on every port; user JWT validated locally by every service
+  (shared signing key from environment); internal calls also carry X-Service-Key;
+  role-based access control per endpoint; audit log per replica.
+endlegend
 @enduml

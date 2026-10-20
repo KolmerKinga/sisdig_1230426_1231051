@@ -1,39 +1,52 @@
 @startuml
-' Sources: SIDIS-2026-2027-P1, professor PL2/PL3, PSOFT assignment,
-' PSOFT ZIP and output/arq_corrigida.puml. Proposed distributed design.
-' Solid arrows: requested operational dependencies. Dashed arrows: additional
-' consumers already present in arq_corrigida.puml and supported by PSOFT queries.
-' No DDD integration pattern (e.g. Shared Kernel) is assumed without evidence.
-title AISafe - DDD Context Map\nProposed distributed architecture
-top to bottom direction
+title AISafe - DDD Context Map
+
 skinparam monochrome true
 skinparam shadowing false
 skinparam componentStyle rectangle
 skinparam defaultFontName SansSerif
 skinparam defaultFontSize 13
-skinparam ArrowFontSize 12
-skinparam NoteBackgroundColor white
+skinparam ArrowFontSize 11
+skinparam nodesep 70
+skinparam ranksep 70
 
-rectangle "Route / Flight Operations\n\nRoute, RouteHistory, Flight" as Route
-rectangle "Aircraft Management\n\nAircraftModel, Aircraft\nAircraftAvailability, AircraftCertification" as Aircraft
-rectangle "Airport Management\n\nAirport, Runway, Facilities\nAirportStatus, Certification" as Airport
-rectangle "Maintenance Management\n\nMaintenanceTemplate, MaintenanceRecord" as Maintenance
+rectangle "Route / Flight Operations\n<<core>>\n\nRoute, RouteHistory, Flight\n\nACL: client DTOs\nAircraftInfo, AirportInfo, MaintenanceInfo" as Route
 
-Route -down-> Aircraft : HTTP/REST\nExistence, operational status,\nrange and capacity
-Route -down-> Airport : HTTP/REST\nOrigin and destination,\noperational status, certifications
-Route -down-> Maintenance : HTTP/REST\nMaintenance status\nand maintenance-related availability
-Maintenance --> Aircraft : HTTP/REST\nExistence and minimum required data\n(model and flight hours when needed)
-Aircraft ..> Route : HTTP/REST\nCompatible routes, flight queries\nand statistics
-Airport ..> Route : HTTP/REST\nAirport routes and statistics
+rectangle "Airport Management\n<<supporting>>\n\nAirport, Runway, Facilities,\nAirportStatus, Certification" as Airport
+
+rectangle "Maintenance Management\n<<core>>\n\nMaintenanceTemplate, MaintenanceRecord,\nUsedPart, DoneList\n\nACL: client DTO AircraftInfo" as Maintenance
+
+rectangle "Aircraft Management\n<<core>>\n\nAircraftModel, Aircraft,\nAircraftSpecs, SeatingPack,\nInstalledComponent, AircraftCertification" as Aircraft
+
+rectangle "Identity & Access\n<<generic>>\n\nCollaborator, Role\n\nPublished Language: JWT\n(username, roles)" as Identity
+
+Route -down-> Airport : (1)
+Route -down-> Maintenance : (2)
+Route -down-> Aircraft : (3)
+Maintenance -down-> Aircraft : (4)
+
+Airport -[hidden]right-> Maintenance
+Aircraft -[hidden]down-> Identity
+
+Route <.. Identity : JWT
+Airport <.. Identity : JWT
+Maintenance <.. Identity : JWT
+Aircraft <.. Identity : JWT
 
 legend bottom left
-  Arrows point from the consumer to the information provider.
-  Solid: operational dependencies. Dashed: existing reporting/query dependencies.
-  Each Bounded Context owns its business logic and data.
-  Cross-context dependencies use HTTP/REST; there is no shared database.
-  Boundaries follow business responsibilities and DDD principles.
-  APIs are proposed: direct cross-context repository access must be replaced.
-  Flight represents ScheduledFlight in the current PSOFT code.
-  Model-to-airport certification eligibility remains TBD in the current model.
+  Relationships (arrow from downstream/consumer D to upstream/provider U, all Customer / Supplier over HTTPS/REST):
+  (1) Route/Flight Ops -> Airport: airport status and certifications for routes and flights
+  (2) Route/Flight Ops -> Maintenance: is the aircraft under ongoing maintenance?
+  (3) Route/Flight Ops -> Aircraft: aircraft status, range and capacity; flight hours update
+  (4) Maintenance -> Aircraft: aircraft data; availability change (MAINTENANCE / AVAILABLE)
+  JWT (dashed): Identity & Access issues the token; every context is Conformist to its format
+  and validates it locally.
+
+  Each Bounded Context owns its business rules and its data; there is no shared database.
+  Cross-context references use identifiers only (registrationNumber, IATA code, routeId):
+  JPA relationships across contexts (Flight->Aircraft, Route->Airport,
+  MaintenanceRecord->Aircraft/Collaborator) are replaced by ids + HTTPS/REST calls.
+  Downstream contexts translate upstream JSON into their own DTOs (anticorruption layer),
+  so no context imports classes from another context. Dependencies are acyclic.
 endlegend
 @enduml

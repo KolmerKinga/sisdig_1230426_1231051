@@ -1,63 +1,87 @@
 @startuml
-' Sources: SIDIS assignment replication requirement and LETI-SIDIS-PL3:
-' local lookup first, at least two instances, independent stores, HTTP GET,
-' circular-forwarding protection, timeouts and graceful error handling.
-' Example path comes from PSOFT HangarController; forwarding is not implemented.
-' PL3's simplified example returns 404 when all peers fail. Final error policy
-' for unavailability is left TBD rather than claiming verified absence.
-title AISafe - Peer-to-peer GET Forwarding\nAircraft Management example
+title AISafe - Peer-to-peer GET Forwarding and Aggregation\n(aircraft-service example; same mechanism in every service)
+
 skinparam monochrome true
 skinparam shadowing false
 skinparam defaultFontName SansSerif
-skinparam defaultFontSize 13
-skinparam ArrowFontSize 12
-skinparam NoteBackgroundColor white
+skinparam defaultFontSize 12
+skinparam ArrowFontSize 11
 skinparam sequenceMessageAlign center
 hide footbox
 autonumber
 
 actor "Client" as Client
-participant "Service Replica A" as A
-database "Local Store A" as StoreA
-participant "Service Replica B" as B
-database "Local Store B" as StoreB
+participant "aircraft-1\n:8081" as A
+database "H2\naircraft1" as StoreA
+participant "aircraft-2\n:8082" as B
+database "H2\naircraft2" as StoreB
 
-Client -> A : GET /api/hangar/aircraft/{registrationNumber}
+== 1. Single resource ==
+
+Client -> A : GET /api/hangar/aircraft/CS-TUA\nAuthorization: Bearer <JWT>
 activate A
-A -> StoreA : Find aircraft by registrationNumber
-StoreA --> A : Local lookup result
+A -> A : validate JWT + role (ATCC / BACKOFFICE / ADMIN)
+A -> StoreA : findById("CS-TUA")
+StoreA --> A : empty
 
-alt A - Data found locally
-  A --> Client : HTTP 200 OK\nLocal aircraft data
-else B / C - Data not found locally
-  A -> B : HTTP GET - same resource\nForwarding control: mechanism TBD
-  alt B - Peer reachable
-    B -> StoreB : Find aircraft by registrationNumber
-    StoreB --> B : Peer lookup result
-    alt B - Data found in peer
-      B --> A : HTTP 200 OK\nAircraft data
-      A --> Client : HTTP 200 OK\nAircraft data returned by peer
-    else C - Data also absent in peer
-      B --> A : HTTP 404 Not Found
-      A --> Client : HTTP 404 Not Found
-    end
-  else C - Peer unavailable or timeout
-    note over A, B
-      No successful peer response within the timeout.
-      Handle failure without indefinite blocking.
-    end note
-    A --> Client : Graceful failure response\nHTTP status policy: TBD
+alt aircraft-2 answers
+  A -> B : GET /api/hangar/aircraft/CS-TUA\nAuthorization: Bearer <JWT>\nX-Service-Key: <key>\nX-Forwarded-By: aircraft-1
+  activate B
+  note right of B
+    Request has X-Forwarded-By:
+    answer from local store only,
+    never forward again (max 1 hop,
+    no circular forwarding).
+  end note
+  B -> StoreB : findById("CS-TUA")
+  alt Found on aircraft-2
+    StoreB --> B : Aircraft
+    B --> A : 200 OK + AircraftResponse
+    A --> Client : 200 OK + AircraftResponse
+  else Not found on aircraft-2
+    StoreB --> B : empty
+    B --> A : 404 Not Found
+    A --> Client : 404 Not Found\n(not found on any replica)
   end
+  deactivate B
+else aircraft-2 unreachable: connection refused or no answer in 2 s
+  note over A : if aircraft-2 is already marked as down,\nthe next two calls are skipped (fail fast)
+  A -> B : GET ... (attempt 1)
+  A -> A : wait 200 ms (backoff)
+  A -> B : GET ... (attempt 2)
+  A -> A : mark aircraft-2 as down for 10 s\n(circuit breaker) + log WARN
+  A --> Client : 404 Not Found\nX-Partial-Result: true\n(not found on reachable replicas)
 end
 deactivate A
 
+== 2. Collection query (aggregation) ==
+
+Client -> A : GET /api/hangar/aircraft?status=AVAILABLE
+activate A
+par
+  A -> StoreA : findByStatus(AVAILABLE)
+  StoreA --> A : local list
+else
+  A -> B : GET /api/hangar/aircraft?status=AVAILABLE\nX-Forwarded-By: aircraft-1, X-Service-Key
+  B -> StoreB : findByStatus(AVAILABLE)
+  StoreB --> B : peer list
+  B --> A : 200 OK + list
+end
+A -> A : merge lists, remove duplicates\nby registrationNumber, sort, paginate
+A --> Client : 200 OK + aggregated list\n(X-Partial-Result: true if a peer failed)
+deactivate A
+
 legend bottom left
-  Prevent circular forwarding; exclude self and track request hops/visited peers
-  if needed. Header names, limits and timeout values are TBD.
-  PL3 illustrates a 404 fallback even when a peer is down;
-  the final policy must distinguish missing data from unavailability.
-  This example retrieves one resource. Collection queries may aggregate
-  local and peer results into a coherent response, handling duplicates.
-  GET forwarding alone does not replicate writes or ensure eventual consistency.
+  Rules (implemented once in the forwarding component, reused by every service):
+  - Local store first; peers only when the resource is missing locally (single GET)
+    or always in parallel for collection queries.
+  - X-Forwarded-By marks an internal request: it is answered locally and never re-forwarded.
+  - Forwarded requests keep the user's JWT and add X-Service-Key; requests carrying
+    X-Forwarded-By without a valid service key are rejected with 403.
+  - Timeouts: connect 1 s, read 2 s; 2 attempts with 200 ms backoff; failed peer skipped for 10 s.
+  - 404 only after every reachable replica answered "not found"; partial answers are flagged
+    with X-Partial-Result: true and logged. Availability is preferred (AP, CAP theorem).
+  - Commands (PATCH/PUT/DELETE) on a single resource follow the same lookup: the replica that
+    does not hold the resource forwards the command to the peer that holds it.
 endlegend
 @enduml
