@@ -1,0 +1,820 @@
+{
+  "info": {
+    "_postman_id": "2f97746b-bed4-418b-b55b-1c0005a62c3c",
+    "name": "AISafe - airport-service (SIDIS A1)",
+    "description": "Distributed tests for airport-service: 2 replicas (8091, 8092).\n\n1. Generate certificates (AISafe/scripts/gen-certs) and start both replicas.\n2. Postman > Settings > General: turn OFF 'SSL certificate verification' (self-signed certificate).\n3. Fill the token variables with: python AISafe/scripts/dev-token.py --roles ATCC (and BACKOFFICE) - or with tokens from auth-service.\n4. Run folders 0-4 with both replicas up; stop airport-2 and run folder 5.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "0. Health",
+      "item": [
+        {
+          "name": "airport-1 health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{airport1}}/actuator/health"
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "airport-2 health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{airport2}}/actuator/health"
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1. Local access",
+      "item": [
+        {
+          "name": "GET OPO on airport-1 (stored locally)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_atcc}}"
+              }
+            ],
+            "url": {
+              "raw": "{{airport1}}/api/airports/OPO"
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"X-Data-Source = local\", () => pm.expect(pm.response.headers.get(\"X-Data-Source\")).to.eql(\"local\"));",
+                  "pm.test(\"X-Served-By = airport-1\", () => pm.expect(pm.response.headers.get(\"X-Served-By\")).to.eql(\"airport-1\"));",
+                  "pm.test(\"iata OPO\", () => pm.expect(pm.response.json().iataCode).to.eql(\"OPO\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Forwarding and aggregation",
+      "item": [
+        {
+          "name": "GET CDG on airport-1 (stored on airport-2 -> forwarded)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_atcc}}"
+              }
+            ],
+            "url": {
+              "raw": "{{airport1}}/api/airports/CDG"
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"X-Served-By = airport-1\", () => pm.expect(pm.response.headers.get(\"X-Served-By\")).to.eql(\"airport-1\"));",
+                  "pm.test(\"X-Data-Source contains 8092\", () => pm.expect(pm.response.headers.get(\"X-Data-Source\") || \"\").to.include(\"8092\"));",
+                  "pm.test(\"iata CDG\", () => pm.expect(pm.response.json().iataCode).to.eql(\"CDG\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET XYZ (exists nowhere -> 404)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_atcc}}"
+              }
+            ],
+            "url": {
+              "raw": "{{airport1}}/api/airports/XYZ"
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"X-Partial-Result = false\", () => pm.expect(pm.response.headers.get(\"X-Partial-Result\")).to.eql(\"false\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search all on airport-2 (aggregated from both replicas)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_atcc}}"
+              }
+            ],
+            "url": {
+              "raw": "{{airport2}}/api/airports?size=50"
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"X-Partial-Result = false\", () => pm.expect(pm.response.headers.get(\"X-Partial-Result\")).to.eql(\"false\"));",
+                  "pm.test(\"contains airports of both replicas\", () => { const codes = pm.response.json().map(a => a.iataCode); pm.expect(codes).to.include.members([\"OPO\",\"LIS\",\"MAD\",\"CDG\",\"LHR\",\"FAO\"]); });",
+                  "pm.test(\"no duplicates\", () => { const codes = pm.response.json().map(a => a.iataCode); pm.expect(new Set(codes).size).to.eql(codes.length); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search country=Portugal on airport-1 (OPO, LIS local + FAO from peer)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_atcc}}"
+              }
+            ],
+            "url": {
+              "raw": "{{airport1}}/api/airports?country=portugal"
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"OPO, LIS and FAO\", () => pm.expect(pm.response.json().map(a => a.iataCode)).to.have.members([\"FAO\",\"LIS\",\"OPO\"]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search with pagination (page 0, size 2)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_atcc}}"
+              }
+            ],
+            "url": {
+              "raw": "{{airport1}}/api/airports?page=0&size=2"
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"2 items\", () => pm.expect(pm.response.json().length).to.eql(2));",
+                  "pm.test(\"X-Total-Count >= 6\", () => pm.expect(Number(pm.response.headers.get(\"X-Total-Count\"))).to.be.at.least(6));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Grouped by country (aggregated)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_atcc}}"
+              }
+            ],
+            "url": {
+              "raw": "{{airport1}}/api/airports/grouped?by=country"
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"has Portugal, Spain, France, United Kingdom\", () => pm.expect(pm.response.json()).to.include.keys(\"Portugal\",\"Spain\",\"France\",\"United Kingdom\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Commands",
+      "item": [
+        {
+          "name": "POST BCN on airport-2 (stored on airport-2)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_backoffice}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{airport2}}/api/airports"
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"iataCode\": \"BCN\",\n  \"airportType\": \"International\",\n  \"name\": \"Josep Tarradellas Barcelona-El Prat Airport\",\n  \"status\": \"OPERATIONAL\",\n  \"operationalHours\": \"00:00-24:00\",\n  \"location\": {\n    \"city\": \"Barcelona\",\n    \"country\": \"Spain\",\n    \"region\": \"Catalonia\",\n    \"timezone\": \"Europe/Madrid\",\n    \"latitude\": 41.2974,\n    \"longitude\": 2.0833\n  },\n  \"facilities\": {\n    \"terminalCount\": 2,\n    \"gateCount\": 68,\n    \"services\": [\n      \"WiFi\",\n      \"Duty Free\"\n    ]\n  },\n  \"runways\": [\n    {\n      \"runwayName\": \"07L/25R\",\n      \"length\": 3352.0,\n      \"orientation\": \"Asphalt\",\n      \"status\": \"IN_USE\"\n    }\n  ],\n  \"certifications\": [\n    {\n      \"name\": \"ICAO Annex 14 Compliance\",\n      \"category\": \"SAFETY\",\n      \"startsAt\": \"2024-01-01\",\n      \"expiresAt\": \"2028-01-01\"\n    }\n  ],\n  \"contacts\": [\n    {\n      \"type\": \"EMAIL\",\n      \"value\": \"info@aena.es\"\n    }\n  ],\n  \"airportPhotos\": []\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 (or 409 if already created)\", () => pm.expect(pm.response.code).to.be.oneOf([201,409]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET BCN on airport-1 (forwarded to airport-2)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_atcc}}"
+              }
+            ],
+            "url": {
+              "raw": "{{airport1}}/api/airports/BCN"
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"X-Data-Source contains 8092\", () => pm.expect(pm.response.headers.get(\"X-Data-Source\") || \"\").to.include(\"8092\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST OPO on airport-2 (exists on airport-1 -> 409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_backoffice}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{airport2}}/api/airports"
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"iataCode\": \"OPO\",\n  \"airportType\": \"International\",\n  \"name\": \"Duplicate OPO\",\n  \"status\": \"OPERATIONAL\",\n  \"operationalHours\": \"00:00-24:00\",\n  \"location\": {\n    \"city\": \"Barcelona\",\n    \"country\": \"Spain\",\n    \"region\": \"Catalonia\",\n    \"timezone\": \"Europe/Madrid\",\n    \"latitude\": 41.2974,\n    \"longitude\": 2.0833\n  },\n  \"facilities\": {\n    \"terminalCount\": 2,\n    \"gateCount\": 68,\n    \"services\": [\n      \"WiFi\",\n      \"Duty Free\"\n    ]\n  },\n  \"runways\": [\n    {\n      \"runwayName\": \"07L/25R\",\n      \"length\": 3352.0,\n      \"orientation\": \"Asphalt\",\n      \"status\": \"IN_USE\"\n    }\n  ],\n  \"certifications\": [\n    {\n      \"name\": \"ICAO Annex 14 Compliance\",\n      \"category\": \"SAFETY\",\n      \"startsAt\": \"2024-01-01\",\n      \"expiresAt\": \"2028-01-01\"\n    }\n  ],\n  \"contacts\": [\n    {\n      \"type\": \"EMAIL\",\n      \"value\": \"info@aena.es\"\n    }\n  ],\n  \"airportPhotos\": []\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 409\", () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH status of OPO on airport-2 (command forwarded to airport-1)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_backoffice}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{airport2}}/api/airports/OPO/status"
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"UNDER_MAINTENANCE\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"X-Data-Source contains 8091\", () => pm.expect(pm.response.headers.get(\"X-Data-Source\") || \"\").to.include(\"8091\"));",
+                  "pm.test(\"status changed\", () => pm.expect(pm.response.json().status).to.eql(\"UNDER_MAINTENANCE\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH status of OPO back to OPERATIONAL",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_backoffice}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{airport1}}/api/airports/OPO/status"
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"OPERATIONAL\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"X-Data-Source = local\", () => pm.expect(pm.response.headers.get(\"X-Data-Source\")).to.eql(\"local\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH details of FAO on airport-1 (forwarded)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_backoffice}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{airport1}}/api/airports/FAO/details"
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"operationalHours\": \"04:30-01:30\",\n  \"contacts\": [\n    {\n      \"type\": \"EMAIL\",\n      \"value\": \"faro@ana.pt\"\n    }\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"hours updated\", () => pm.expect(pm.response.json().operationalHours).to.eql(\"04:30-01:30\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST certification to MAD on airport-2 (forwarded)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_atcc}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{airport2}}/api/airports/MAD/certifications"
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"EASA Aerodrome License\",\n  \"category\": \"REGULATORY\",\n  \"startsAt\": \"2025-01-01\",\n  \"expiresAt\": \"2029-01-01\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"X-Data-Source contains 8091\", () => pm.expect(pm.response.headers.get(\"X-Data-Source\") || \"\").to.include(\"8091\"));",
+                  "pm.test(\"certification valid\", () => pm.expect(pm.response.json().valid).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Security and validation",
+      "item": [
+        {
+          "name": "No token -> 401",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{airport1}}/api/airports/OPO"
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 401\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ATCC cannot register airports -> 403",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_atcc}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{airport1}}/api/airports"
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"iataCode\": \"BCN\",\n  \"airportType\": \"International\",\n  \"name\": \"Josep Tarradellas Barcelona-El Prat Airport\",\n  \"status\": \"OPERATIONAL\",\n  \"operationalHours\": \"00:00-24:00\",\n  \"location\": {\n    \"city\": \"Barcelona\",\n    \"country\": \"Spain\",\n    \"region\": \"Catalonia\",\n    \"timezone\": \"Europe/Madrid\",\n    \"latitude\": 41.2974,\n    \"longitude\": 2.0833\n  },\n  \"facilities\": {\n    \"terminalCount\": 2,\n    \"gateCount\": 68,\n    \"services\": [\n      \"WiFi\",\n      \"Duty Free\"\n    ]\n  },\n  \"runways\": [\n    {\n      \"runwayName\": \"07L/25R\",\n      \"length\": 3352.0,\n      \"orientation\": \"Asphalt\",\n      \"status\": \"IN_USE\"\n    }\n  ],\n  \"certifications\": [\n    {\n      \"name\": \"ICAO Annex 14 Compliance\",\n      \"category\": \"SAFETY\",\n      \"startsAt\": \"2024-01-01\",\n      \"expiresAt\": \"2028-01-01\"\n    }\n  ],\n  \"contacts\": [\n    {\n      \"type\": \"EMAIL\",\n      \"value\": \"info@aena.es\"\n    }\n  ],\n  \"airportPhotos\": []\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 403\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Fake internal call without service key -> 403",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_atcc}}"
+              },
+              {
+                "key": "X-Forwarded-By",
+                "value": "attacker"
+              }
+            ],
+            "url": {
+              "raw": "{{airport1}}/api/airports/OPO"
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 403\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Invalid IATA code -> 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_backoffice}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{airport1}}/api/airports"
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"iataCode\": \"bc1\",\n  \"airportType\": \"International\",\n  \"name\": \"Josep Tarradellas Barcelona-El Prat Airport\",\n  \"status\": \"OPERATIONAL\",\n  \"operationalHours\": \"00:00-24:00\",\n  \"location\": {\n    \"city\": \"Barcelona\",\n    \"country\": \"Spain\",\n    \"region\": \"Catalonia\",\n    \"timezone\": \"Europe/Madrid\",\n    \"latitude\": 41.2974,\n    \"longitude\": 2.0833\n  },\n  \"facilities\": {\n    \"terminalCount\": 2,\n    \"gateCount\": 68,\n    \"services\": [\n      \"WiFi\",\n      \"Duty Free\"\n    ]\n  },\n  \"runways\": [\n    {\n      \"runwayName\": \"07L/25R\",\n      \"length\": 3352.0,\n      \"orientation\": \"Asphalt\",\n      \"status\": \"IN_USE\"\n    }\n  ],\n  \"certifications\": [\n    {\n      \"name\": \"ICAO Annex 14 Compliance\",\n      \"category\": \"SAFETY\",\n      \"startsAt\": \"2024-01-01\",\n      \"expiresAt\": \"2028-01-01\"\n    }\n  ],\n  \"contacts\": [\n    {\n      \"type\": \"EMAIL\",\n      \"value\": \"info@aena.es\"\n    }\n  ],\n  \"airportPhotos\": []\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Invalid status value -> 400",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_backoffice}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{airport1}}/api/airports/OPO/status"
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"OPEN_SOMETIMES\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Unknown grouping -> 400",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_atcc}}"
+              }
+            ],
+            "url": {
+              "raw": "{{airport1}}/api/airports/grouped?by=planet"
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Failure (STOP airport-2 before running)",
+      "description": "Stop the airport-2 process (instance2) and run this folder. airport-1 must keep answering.",
+      "item": [
+        {
+          "name": "GET OPO on airport-1 still works (local)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_atcc}}"
+              }
+            ],
+            "url": {
+              "raw": "{{airport1}}/api/airports/OPO"
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"X-Data-Source = local\", () => pm.expect(pm.response.headers.get(\"X-Data-Source\")).to.eql(\"local\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET CDG on airport-1 -> 404 partial (airport-2 down)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_atcc}}"
+              }
+            ],
+            "url": {
+              "raw": "{{airport1}}/api/airports/CDG"
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"X-Partial-Result = true\", () => pm.expect(pm.response.headers.get(\"X-Partial-Result\")).to.eql(\"true\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search on airport-1 -> 200 with local data, partial",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_atcc}}"
+              }
+            ],
+            "url": {
+              "raw": "{{airport1}}/api/airports"
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"X-Partial-Result = true\", () => pm.expect(pm.response.headers.get(\"X-Partial-Result\")).to.eql(\"true\"));",
+                  "pm.test(\"only airport-1 data\", () => pm.expect(pm.response.json().map(a => a.iataCode)).to.include.members([\"LIS\",\"MAD\",\"OPO\"]));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "airport1",
+      "value": "https://localhost:8091"
+    },
+    {
+      "key": "airport2",
+      "value": "https://localhost:8092"
+    },
+    {
+      "key": "token_atcc",
+      "value": "PASTE_ATCC_TOKEN"
+    },
+    {
+      "key": "token_backoffice",
+      "value": "PASTE_BACKOFFICE_TOKEN"
+    }
+  ]
+}

@@ -1,0 +1,186 @@
+[
+  {
+    "iataCode": "OPO",
+    "airportType": "International",
+    "name": "Francisco Sá Carneiro Airport",
+    "status": "OPERATIONAL",
+    "operationalHours": "00:00-24:00",
+    "location": {
+      "city": "Porto",
+      "country": "Portugal",
+      "region": "Porto District",
+      "timezone": "Europe/Lisbon",
+      "latitude": 41.2421,
+      "longitude": -8.68139
+    },
+    "facilities": {
+      "terminalCount": 1,
+      "gateCount": 35,
+      "services": [
+        "Cargo Terminal",
+        "Restaurants",
+        "Duty Free",
+        "Free WiFi",
+        "Parking"
+      ]
+    },
+    "runways": [
+      {
+        "runwayName": "17/35",
+        "length": 3480.0,
+        "orientation": "Asphalt",
+        "status": "IN_USE"
+      }
+    ],
+    "certifications": [
+      {
+        "name": "ICAO Annex 14 Compliance",
+        "category": "SAFETY",
+        "startsAt": "2023-01-01",
+        "expiresAt": "2027-01-01"
+      }
+    ],
+    "contacts": [
+      {
+        "type": "PHONE",
+        "value": "+351 22 943 2400"
+      },
+      {
+        "type": "EMAIL",
+        "value": "info@ana.pt"
+      }
+    ],
+    "airportPhotos": [
+      "opo_terminal.jpg",
+      "opo_runway.jpg"
+    ]
+  },
+  {
+    "iataCode": "LIS",
+    "airportType": "International",
+    "name": "Humberto Delgado Airport",
+    "status": "OPERATIONAL",
+    "operationalHours": "00:00-24:00",
+    "location": {
+      "city": "Lisbon",
+      "country": "Portugal",
+      "region": "Lisbon Region",
+      "timezone": "Europe/Lisbon",
+      "latitude": 38.7813,
+      "longitude": -9.13592
+    },
+    "facilities": {
+      "terminalCount": 2,
+      "gateCount": 47,
+      "services": [
+        "VIP Lounge",
+        "Medical Center",
+        "Duty Free",
+        "Metro Access",
+        "WiFi"
+      ]
+    },
+    "runways": [
+      {
+        "runwayName": "03/21",
+        "length": 3805.0,
+        "orientation": "Asphalt",
+        "status": "OPEN"
+      },
+      {
+        "runwayName": "17/35",
+        "length": 2400.0,
+        "orientation": "Asphalt",
+        "status": "UNDER_MAINTENANCE"
+      }
+    ],
+    "certifications": [
+      {
+        "name": "ICAO Safety Certification",
+        "category": "SAFETY",
+        "startsAt": "2024-01-01",
+        "expiresAt": "2028-01-01"
+      },
+      {
+        "name": "EASA Aerodrome License",
+        "category": "REGULATORY",
+        "startsAt": "2023-06-01",
+        "expiresAt": "2027-06-01"
+      }
+    ],
+    "contacts": [
+      {
+        "type": "PHONE",
+        "value": "+351 21 841 3500"
+      },
+      {
+        "type": "EMAIL",
+        "value": "lisbon.airport@ana.pt"
+      }
+    ],
+    "airportPhotos": [
+      "lis_terminal_1.jpg",
+      "lis_runway_night.jpg"
+    ]
+  },
+  {
+    "iataCode": "MAD",
+    "airportType": "International",
+    "name": "Adolfo Suárez Madrid-Barajas Airport",
+    "status": "OPERATIONAL",
+    "operationalHours": "00:00-24:00",
+    "location": {
+      "city": "Madrid",
+      "country": "Spain",
+      "region": "Madrid Region",
+      "timezone": "Europe/Madrid",
+      "latitude": 40.4983,
+      "longitude": -3.56795
+    },
+    "facilities": {
+      "terminalCount": 4,
+      "gateCount": 60,
+      "services": [
+        "High-Speed Rail Connection",
+        "VIP Lounges",
+        "Cargo Hub",
+        "WiFi"
+      ]
+    },
+    "runways": [
+      {
+        "runwayName": "14L/32R",
+        "length": 3500.0,
+        "orientation": "Asphalt",
+        "status": "IN_USE"
+      },
+      {
+        "runwayName": "18L/36R",
+        "length": 4100.0,
+        "orientation": "Asphalt",
+        "status": "OPEN"
+      }
+    ],
+    "certifications": [
+      {
+        "name": "EU Major Airport Compliance",
+        "category": "REGULATORY",
+        "startsAt": "2022-05-01",
+        "expiresAt": "2027-05-01"
+      }
+    ],
+    "contacts": [
+      {
+        "type": "PHONE",
+        "value": "+34 913 21 10 00"
+      },
+      {
+        "type": "EMAIL",
+        "value": "info@aena.es"
+      }
+    ],
+    "airportPhotos": [
+      "mad_terminal.jpg"
+    ]
+  }
+]

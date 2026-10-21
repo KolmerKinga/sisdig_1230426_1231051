@@ -1,0 +1,171 @@
+[
+  {
+    "iataCode": "CDG",
+    "airportType": "International",
+    "name": "Charles de Gaulle Airport",
+    "status": "OPERATIONAL",
+    "operationalHours": "00:00-24:00",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "region": "Île-de-France",
+      "timezone": "Europe/Paris",
+      "latitude": 49.0097,
+      "longitude": 2.55
+    },
+    "facilities": {
+      "terminalCount": 3,
+      "gateCount": 78,
+      "services": [
+        "TGV Station",
+        "Luxury Lounges",
+        "Cargo Hub",
+        "Duty Free",
+        "WiFi"
+      ]
+    },
+    "runways": [
+      {
+        "runwayName": "09L/27R",
+        "length": 4200.0,
+        "orientation": "Concrete",
+        "status": "IN_USE"
+      },
+      {
+        "runwayName": "08L/26R",
+        "length": 4215.0,
+        "orientation": "Concrete",
+        "status": "OPEN"
+      }
+    ],
+    "certifications": [
+      {
+        "name": "ICAO Category III Landing Capability",
+        "category": "SAFETY",
+        "startsAt": "2023-09-01",
+        "expiresAt": "2028-09-01"
+      }
+    ],
+    "contacts": [
+      {
+        "type": "PHONE",
+        "value": "+33 1 70 36 39 50"
+      },
+      {
+        "type": "EMAIL",
+        "value": "info@parisaeroport.fr"
+      }
+    ],
+    "airportPhotos": [
+      "cdg_terminal.jpg"
+    ]
+  },
+  {
+    "iataCode": "LHR",
+    "airportType": "International",
+    "name": "Heathrow Airport",
+    "status": "OPERATIONAL",
+    "operationalHours": "00:00-24:00",
+    "location": {
+      "city": "London",
+      "country": "United Kingdom",
+      "region": "Greater London",
+      "timezone": "Europe/London",
+      "latitude": 51.47,
+      "longitude": -0.4543
+    },
+    "facilities": {
+      "terminalCount": 5,
+      "gateCount": 80,
+      "services": [
+        "Cargo Terminal",
+        "Lounges",
+        "Duty Free",
+        "Free WiFi",
+        "Hotels"
+      ]
+    },
+    "runways": [
+      {
+        "runwayName": "09L/27R",
+        "length": 3902.0,
+        "orientation": "Asphalt",
+        "status": "IN_USE"
+      },
+      {
+        "runwayName": "09R/27L",
+        "length": 3902.0,
+        "orientation": "Asphalt",
+        "status": "IN_USE"
+      }
+    ],
+    "certifications": [
+      {
+        "name": "ICAO Annex 14 Compliance",
+        "category": "SAFETY",
+        "startsAt": "2022-01-01",
+        "expiresAt": "2027-01-01"
+      }
+    ],
+    "contacts": [
+      {
+        "type": "PHONE",
+        "value": "+44 844 335 1801"
+      },
+      {
+        "type": "EMAIL",
+        "value": "info@heathrow.com"
+      }
+    ],
+    "airportPhotos": [
+      "lhr_terminal.jpg"
+    ]
+  },
+  {
+    "iataCode": "FAO",
+    "airportType": "International",
+    "name": "Faro Airport",
+    "status": "UNDER_MAINTENANCE",
+    "operationalHours": "05:00-01:00",
+    "location": {
+      "city": "Faro",
+      "country": "Portugal",
+      "region": "Algarve",
+      "timezone": "Europe/Lisbon",
+      "latitude": 37.0144,
+      "longitude": -7.96591
+    },
+    "facilities": {
+      "terminalCount": 1,
+      "gateCount": 22,
+      "services": [
+        "Restaurants",
+        "Duty Free",
+        "WiFi"
+      ]
+    },
+    "runways": [
+      {
+        "runwayName": "10/28",
+        "length": 2490.0,
+        "orientation": "Asphalt",
+        "status": "OPEN"
+      }
+    ],
+    "certifications": [
+      {
+        "name": "ICAO Annex 14 Compliance",
+        "category": "SAFETY",
+        "startsAt": "2023-03-01",
+        "expiresAt": "2027-03-01"
+      }
+    ],
+    "contacts": [
+      {
+        "type": "PHONE",
+        "value": "+351 289 800 800"
+      }
+    ],
+    "airportPhotos": []
+  }
+]

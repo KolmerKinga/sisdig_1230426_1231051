@@ -1,0 +1,5 @@
+iata,type,name,status,city,longitude,latitude,region,timezone,country,runwayCount,runways,terminalCount,services,gateCount,certifications,certStarts,certExpires,phone,email,photos
+JFK,International,John F. Kennedy International Airport,OPERATIONAL,New York,-73.7781,40.6413,New York,America/New_York,United States,2,"04L/22R|3682|Asphalt|IN_USE;13R/31L|4423|Asphalt|IN_USE",5,"Cargo Terminal;Duty Free;WiFi",90,"FAA Certification","2021-01-01","2027-01-01","+1 718-244-4444","info@jfkairport.com","jfk_terminal.jpg"
+DXB,International,Dubai International Airport,OPERATIONAL,Dubai,55.3644,25.2532,Dubai,Asia/Dubai,United Arab Emirates,2,"12L/30R|4000|Asphalt|IN_USE;12R/30L|4500|Asphalt|IN_USE",3,"Luxury Lounges;Duty Free;Hotels",100,"ICAO Annex 14 Compliance;GCAA Certification","2023-01-01;2022-03-01","2027-01-01;2026-03-01","+971 4 224 5555","info@dubaiairports.ae","dxb_terminal.jpg"
+OPO,International,Duplicate of an airport stored on airport-1,OPERATIONAL,Porto,-8.68,41.24,Porto District,Europe/Lisbon,Portugal,1,"17/35|3480|Asphalt|IN_USE",1,"WiFi",35,"","","","","",""
+XXX,International,Broken row,NOT_A_STATUS,Nowhere,0,0,R,UTC,C,0,,1,,1,,,,,,
