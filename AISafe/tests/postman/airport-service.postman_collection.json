@@ -15,7 +15,14 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{airport1}}/actuator/health"
+              "raw": "{{airport1}}/actuator/health",
+              "host": [
+                "{{airport1}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
             },
             "description": ""
           },
@@ -37,7 +44,14 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{airport2}}/actuator/health"
+              "raw": "{{airport2}}/actuator/health",
+              "host": [
+                "{{airport2}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
             },
             "description": ""
           },
@@ -69,7 +83,15 @@
               }
             ],
             "url": {
-              "raw": "{{airport1}}/api/airports/OPO"
+              "raw": "{{airport1}}/api/airports/OPO",
+              "host": [
+                "{{airport1}}"
+              ],
+              "path": [
+                "api",
+                "airports",
+                "OPO"
+              ]
             },
             "description": ""
           },
@@ -104,7 +126,15 @@
               }
             ],
             "url": {
-              "raw": "{{airport1}}/api/airports/CDG"
+              "raw": "{{airport1}}/api/airports/CDG",
+              "host": [
+                "{{airport1}}"
+              ],
+              "path": [
+                "api",
+                "airports",
+                "CDG"
+              ]
             },
             "description": ""
           },
@@ -134,7 +164,15 @@
               }
             ],
             "url": {
-              "raw": "{{airport1}}/api/airports/XYZ"
+              "raw": "{{airport1}}/api/airports/XYZ",
+              "host": [
+                "{{airport1}}"
+              ],
+              "path": [
+                "api",
+                "airports",
+                "XYZ"
+              ]
             },
             "description": ""
           },
@@ -162,7 +200,20 @@
               }
             ],
             "url": {
-              "raw": "{{airport2}}/api/airports?size=50"
+              "raw": "{{airport2}}/api/airports?size=50",
+              "host": [
+                "{{airport2}}"
+              ],
+              "path": [
+                "api",
+                "airports"
+              ],
+              "query": [
+                {
+                  "key": "size",
+                  "value": "50"
+                }
+              ]
             },
             "description": ""
           },
@@ -192,7 +243,20 @@
               }
             ],
             "url": {
-              "raw": "{{airport1}}/api/airports?country=portugal"
+              "raw": "{{airport1}}/api/airports?country=portugal",
+              "host": [
+                "{{airport1}}"
+              ],
+              "path": [
+                "api",
+                "airports"
+              ],
+              "query": [
+                {
+                  "key": "country",
+                  "value": "portugal"
+                }
+              ]
             },
             "description": ""
           },
@@ -220,7 +284,24 @@
               }
             ],
             "url": {
-              "raw": "{{airport1}}/api/airports?page=0&size=2"
+              "raw": "{{airport1}}/api/airports?page=0&size=2",
+              "host": [
+                "{{airport1}}"
+              ],
+              "path": [
+                "api",
+                "airports"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "2"
+                }
+              ]
             },
             "description": ""
           },
@@ -249,7 +330,21 @@
               }
             ],
             "url": {
-              "raw": "{{airport1}}/api/airports/grouped?by=country"
+              "raw": "{{airport1}}/api/airports/grouped?by=country",
+              "host": [
+                "{{airport1}}"
+              ],
+              "path": [
+                "api",
+                "airports",
+                "grouped"
+              ],
+              "query": [
+                {
+                  "key": "by",
+                  "value": "country"
+                }
+              ]
             },
             "description": ""
           },
@@ -286,7 +381,14 @@
               }
             ],
             "url": {
-              "raw": "{{airport2}}/api/airports"
+              "raw": "{{airport2}}/api/airports",
+              "host": [
+                "{{airport2}}"
+              ],
+              "path": [
+                "api",
+                "airports"
+              ]
             },
             "description": "",
             "body": {
@@ -317,7 +419,15 @@
               }
             ],
             "url": {
-              "raw": "{{airport1}}/api/airports/BCN"
+              "raw": "{{airport1}}/api/airports/BCN",
+              "host": [
+                "{{airport1}}"
+              ],
+              "path": [
+                "api",
+                "airports",
+                "BCN"
+              ]
             },
             "description": ""
           },
@@ -349,7 +459,14 @@
               }
             ],
             "url": {
-              "raw": "{{airport2}}/api/airports"
+              "raw": "{{airport2}}/api/airports",
+              "host": [
+                "{{airport2}}"
+              ],
+              "path": [
+                "api",
+                "airports"
+              ]
             },
             "description": "",
             "body": {
@@ -384,7 +501,16 @@
               }
             ],
             "url": {
-              "raw": "{{airport2}}/api/airports/OPO/status"
+              "raw": "{{airport2}}/api/airports/OPO/status",
+              "host": [
+                "{{airport2}}"
+              ],
+              "path": [
+                "api",
+                "airports",
+                "OPO",
+                "status"
+              ]
             },
             "description": "",
             "body": {
@@ -421,7 +547,16 @@
               }
             ],
             "url": {
-              "raw": "{{airport1}}/api/airports/OPO/status"
+              "raw": "{{airport1}}/api/airports/OPO/status",
+              "host": [
+                "{{airport1}}"
+              ],
+              "path": [
+                "api",
+                "airports",
+                "OPO",
+                "status"
+              ]
             },
             "description": "",
             "body": {
@@ -457,7 +592,16 @@
               }
             ],
             "url": {
-              "raw": "{{airport1}}/api/airports/FAO/details"
+              "raw": "{{airport1}}/api/airports/FAO/details",
+              "host": [
+                "{{airport1}}"
+              ],
+              "path": [
+                "api",
+                "airports",
+                "FAO",
+                "details"
+              ]
             },
             "description": "",
             "body": {
@@ -493,7 +637,16 @@
               }
             ],
             "url": {
-              "raw": "{{airport2}}/api/airports/MAD/certifications"
+              "raw": "{{airport2}}/api/airports/MAD/certifications",
+              "host": [
+                "{{airport2}}"
+              ],
+              "path": [
+                "api",
+                "airports",
+                "MAD",
+                "certifications"
+              ]
             },
             "description": "",
             "body": {
@@ -526,7 +679,15 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{airport1}}/api/airports/OPO"
+              "raw": "{{airport1}}/api/airports/OPO",
+              "host": [
+                "{{airport1}}"
+              ],
+              "path": [
+                "api",
+                "airports",
+                "OPO"
+              ]
             },
             "description": ""
           },
@@ -557,7 +718,14 @@
               }
             ],
             "url": {
-              "raw": "{{airport1}}/api/airports"
+              "raw": "{{airport1}}/api/airports",
+              "host": [
+                "{{airport1}}"
+              ],
+              "path": [
+                "api",
+                "airports"
+              ]
             },
             "description": "",
             "body": {
@@ -592,7 +760,15 @@
               }
             ],
             "url": {
-              "raw": "{{airport1}}/api/airports/OPO"
+              "raw": "{{airport1}}/api/airports/OPO",
+              "host": [
+                "{{airport1}}"
+              ],
+              "path": [
+                "api",
+                "airports",
+                "OPO"
+              ]
             },
             "description": ""
           },
@@ -623,7 +799,14 @@
               }
             ],
             "url": {
-              "raw": "{{airport1}}/api/airports"
+              "raw": "{{airport1}}/api/airports",
+              "host": [
+                "{{airport1}}"
+              ],
+              "path": [
+                "api",
+                "airports"
+              ]
             },
             "description": "",
             "body": {
@@ -658,7 +841,16 @@
               }
             ],
             "url": {
-              "raw": "{{airport1}}/api/airports/OPO/status"
+              "raw": "{{airport1}}/api/airports/OPO/status",
+              "host": [
+                "{{airport1}}"
+              ],
+              "path": [
+                "api",
+                "airports",
+                "OPO",
+                "status"
+              ]
             },
             "description": "",
             "body": {
@@ -689,7 +881,21 @@
               }
             ],
             "url": {
-              "raw": "{{airport1}}/api/airports/grouped?by=planet"
+              "raw": "{{airport1}}/api/airports/grouped?by=planet",
+              "host": [
+                "{{airport1}}"
+              ],
+              "path": [
+                "api",
+                "airports",
+                "grouped"
+              ],
+              "query": [
+                {
+                  "key": "by",
+                  "value": "planet"
+                }
+              ]
             },
             "description": ""
           },
@@ -722,7 +928,15 @@
               }
             ],
             "url": {
-              "raw": "{{airport1}}/api/airports/OPO"
+              "raw": "{{airport1}}/api/airports/OPO",
+              "host": [
+                "{{airport1}}"
+              ],
+              "path": [
+                "api",
+                "airports",
+                "OPO"
+              ]
             },
             "description": ""
           },
@@ -750,7 +964,15 @@
               }
             ],
             "url": {
-              "raw": "{{airport1}}/api/airports/CDG"
+              "raw": "{{airport1}}/api/airports/CDG",
+              "host": [
+                "{{airport1}}"
+              ],
+              "path": [
+                "api",
+                "airports",
+                "CDG"
+              ]
             },
             "description": ""
           },
@@ -778,7 +1000,14 @@
               }
             ],
             "url": {
-              "raw": "{{airport1}}/api/airports"
+              "raw": "{{airport1}}/api/airports",
+              "host": [
+                "{{airport1}}"
+              ],
+              "path": [
+                "api",
+                "airports"
+              ]
             },
             "description": ""
           },
