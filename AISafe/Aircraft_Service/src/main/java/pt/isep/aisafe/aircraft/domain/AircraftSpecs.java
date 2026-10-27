@@ -3,29 +3,49 @@ package pt.isep.aisafe.aircraft.domain;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 
+import java.util.Objects;
+
 @Embeddable
 public class AircraftSpecs {
-    @Column(nullable = false)
+
+    @Column(name = "fuel_capacity_liters", nullable = false)
     private Double fuelCapacityLiters;
 
-    @Column(nullable = false)
+    @Column(name = "maximum_range_km", nullable = false)
     private Double maximumRangeKm;
 
-    @Column(nullable = false)
+    @Column(name = "cruising_speed_kph", nullable = false)
     private Double cruisingSpeedKph;
 
+    @Column(name = "standard_seating_capacity", nullable = false)
     private Integer standardSeatingCapacity;
 
-    public AircraftSpecs() {}
+    protected AircraftSpecs() {}
 
-    public AircraftSpecs(Double fuelCapacity, Double maximumRange, Double cruisingSpeed, Integer standardSeatingCapacity) {
-        this.fuelCapacityLiters = fuelCapacity;
-        this.maximumRangeKm = maximumRange;
-        this.cruisingSpeedKph = cruisingSpeed;
+    public AircraftSpecs(Double fuelCapacityLiters, Double maximumRangeKm,
+                         Double cruisingSpeedKph, Integer standardSeatingCapacity) {
+        if (fuelCapacityLiters == null || fuelCapacityLiters <= 0) {
+            throw new IllegalArgumentException("Fuel capacity must be positive");
+        }
+        if (maximumRangeKm == null || maximumRangeKm <= 0) {
+            throw new IllegalArgumentException("Maximum range must be positive");
+        }
+        if (cruisingSpeedKph == null || cruisingSpeedKph <= 0) {
+            throw new IllegalArgumentException("Cruising speed must be positive");
+        }
+        if (standardSeatingCapacity == null || standardSeatingCapacity <= 0) {
+            throw new IllegalArgumentException("Standard seating capacity must be positive");
+        }
+
+        this.fuelCapacityLiters = fuelCapacityLiters;
+        this.maximumRangeKm = maximumRangeKm;
+        this.cruisingSpeedKph = cruisingSpeedKph;
         this.standardSeatingCapacity = standardSeatingCapacity;
     }
 
-    public Double getFuelCapacity() { return fuelCapacityLiters; }
+    public Double getFuelCapacity() {
+        return fuelCapacityLiters;
+    }
 
     public Double getMaximumRange() {
         return maximumRangeKm;
@@ -39,19 +59,19 @@ public class AircraftSpecs {
         return standardSeatingCapacity;
     }
 
-    public void changeStandardSeatingCapacity(Integer standardSeatingCapacity) {
-        this.standardSeatingCapacity = standardSeatingCapacity;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        AircraftSpecs that = (AircraftSpecs) o;
+        return Objects.equals(fuelCapacityLiters, that.fuelCapacityLiters) &&
+                Objects.equals(maximumRangeKm, that.maximumRangeKm) &&
+                Objects.equals(cruisingSpeedKph, that.cruisingSpeedKph) &&
+                Objects.equals(standardSeatingCapacity, that.standardSeatingCapacity);
     }
 
-    public void changeMaximumRangeKm(Double maximumRangeKm) {
-        this.maximumRangeKm = maximumRangeKm;
-    }
-
-    public void changeFuelCapacityLiters(Double fuelCapacityLiters) {
-        this.fuelCapacityLiters = fuelCapacityLiters;
-    }
-
-    public void changeCruisingSpeedKph(Double cruisingSpeedKph) {
-        this.cruisingSpeedKph = cruisingSpeedKph;
+    @Override
+    public int hashCode() {
+        return Objects.hash(fuelCapacityLiters, maximumRangeKm, cruisingSpeedKph, standardSeatingCapacity);
     }
 }

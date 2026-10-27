@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 @Entity
 @Table(name = "company_aircrafts")
@@ -35,9 +36,10 @@ public class Aircraft {
     @Column(nullable = false)
     private Double totalFlightHours;
 
-    private Double meanRange;
+    @Column(nullable = false)
+    private Double meanRange = 0.0;
 
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(
             name = "aircraft_features",
             joinColumns = @JoinColumn(name = "registration_number")
@@ -66,6 +68,22 @@ public class Aircraft {
 
     public Aircraft(String registrationNumber, AircraftModel model, LocalDate manufacturingDate,
                     Double totalOperationalHours, Double totalFlightHours) {
+        if (registrationNumber == null || registrationNumber.isBlank()) {
+            throw new IllegalArgumentException("Registration number cannot be empty");
+        }
+        if (model == null) {
+            throw new IllegalArgumentException("Aircraft model cannot be null");
+        }
+        if (manufacturingDate == null || manufacturingDate.isAfter(LocalDate.now())) {
+            throw new IllegalArgumentException("Invalid manufacturing date");
+        }
+        if (totalOperationalHours == null || totalOperationalHours < 0) {
+            throw new IllegalArgumentException("Operational hours must be non-negative");
+        }
+        if (totalFlightHours == null || totalFlightHours < 0) {
+            throw new IllegalArgumentException("Flight hours must be non-negative");
+        }
+
         this.registrationNumber = registrationNumber;
         this.model = model;
         this.manufacturingDate = manufacturingDate;
@@ -96,7 +114,7 @@ public class Aircraft {
             throw new IllegalArgumentException("Component cannot be null");
         }
         boolean alreadyInstalled = components.stream()
-                .anyMatch(c -> c.getSerialNumber().equals(component.getSerialNumber()));
+                .anyMatch(c -> Objects.equals(c.getSerialNumber(), component.getSerialNumber()));
         if (alreadyInstalled) {
             throw new IllegalStateException("Component already installed");
         }
@@ -108,8 +126,9 @@ public class Aircraft {
         if (component == null) {
             throw new IllegalArgumentException("Component cannot be null");
         }
-        components.remove(component);
-        component.setAircraft(null);
+        if (components.remove(component)) {
+            component.setAircraft(null);
+        }
     }
 
     public void addCertification(AircraftCertification certification) {
@@ -148,6 +167,13 @@ public class Aircraft {
             throw new IllegalArgumentException("Hours must be positive");
         }
         this.totalFlightHours += additionalHours;
+    }
+
+    public void updateMeanRange(Double newMeanRange) {
+        if (newMeanRange == null || newMeanRange < 0) {
+            throw new IllegalArgumentException("Range to update must be non-negative");
+        }
+        this.meanRange = (this.meanRange == null ? 0.0 : this.meanRange) + newMeanRange;
     }
 
     public boolean isReadyForFlight() {
@@ -197,13 +223,5 @@ public class Aircraft {
 
     public SeatingPack getSeatingPack() {
         return seatingPack;
-    }
-
-    public void updateMeanRange(Double newMeanRange) {
-        if (newMeanRange != null) {
-            this.meanRange += newMeanRange;
-        } else {
-            throw new IllegalStateException("Range to update can not be null");
-        }
     }
 }
