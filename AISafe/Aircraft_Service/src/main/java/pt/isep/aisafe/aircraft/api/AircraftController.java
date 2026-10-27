@@ -6,10 +6,14 @@ import pt.isep.aisafe.aircraft.api.dto.UpdateStatusRequest;
 import pt.isep.aisafe.aircraft.application.AircraftService;
 import pt.isep.aisafe.aircraft.domain.Aircraft;
 import pt.isep.aisafe.aircraft.domain.AircraftAvailability;
+import pt.isep.aisafe.aircraft.shared.forwarding.ForwardingHeaders;
+import pt.isep.aisafe.aircraft.shared.forwarding.PeerClient;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @RestController
@@ -17,9 +21,11 @@ import java.util.List;
 public class AircraftController {
 
     private final AircraftService aircraftService;
+    private final PeerClient peerClient;
 
-    public AircraftController(AircraftService aircraftService) {
+    public AircraftController(AircraftService aircraftService, PeerClient peerClient) {
         this.aircraftService = aircraftService;
+        this.peerClient = peerClient;
     }
 
     @PostMapping
@@ -54,11 +60,31 @@ public class AircraftController {
     }
 
     @GetMapping
-    public ResponseEntity<List<AircraftResponse>> searchAircraft(@RequestParam(required = false) AircraftAvailability status) {
-        List<AircraftResponse> list = aircraftService.searchAircraft(status).stream()
+    public ResponseEntity<List<AircraftResponse>> searchAircraft(
+            @RequestParam(required = false) AircraftAvailability status,
+            @RequestHeader(value = ForwardingHeaders.FORWARDED_FROM, required = false) String forwardedFrom) {
+
+        // 1. Obter aeronaves da base de dados da réplica local
+        List<AircraftResponse> localList = aircraftService.searchAircraft(status).stream()
                 .map(this::toResponse)
                 .toList();
-        return ResponseEntity.ok(list);
+
+        // 2. Se o pedido veio reencaminhado de outra réplica, devolve apenas a lista local (evita loop infinito)
+        if (forwardedFrom != null) {
+            return ResponseEntity.ok(localList);
+        }
+
+        // 3. Se é o nó inicial que recebeu o pedido do cliente/Postman, agrega os dados locais com os das outras réplicas
+        List<AircraftResponse> result = new ArrayList<>(localList);
+        List<AircraftResponse[]> remoteResponses = peerClient.fetchFromOtherPeers("/api/aircraft", AircraftResponse[].class);
+
+        for (AircraftResponse[] remoteArray : remoteResponses) {
+            if (remoteArray != null) {
+                result.addAll(Arrays.asList(remoteArray));
+            }
+        }
+
+        return ResponseEntity.ok(result);
     }
 
     private AircraftResponse toResponse(Aircraft aircraft) {

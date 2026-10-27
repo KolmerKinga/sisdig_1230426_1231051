@@ -1,0 +1,10 @@
+[
+  {
+    "registrationNumber": "CS-TMB",
+    "modelName": "B737-800",
+    "manufacturingDate": "2019-07-22",
+    "totalOperationalHours": 3400.0,
+    "totalFlightHours": 2800.0,
+    "status": "AVAILABLE"
+  }
+]

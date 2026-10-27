@@ -1,0 +1,10 @@
+[
+  {
+    "registrationNumber": "CS-TMA",
+    "modelName": "A320-200",
+    "manufacturingDate": "2021-03-10",
+    "totalOperationalHours": 1200.0,
+    "totalFlightHours": 950.0,
+    "status": "AVAILABLE"
+  }
+]

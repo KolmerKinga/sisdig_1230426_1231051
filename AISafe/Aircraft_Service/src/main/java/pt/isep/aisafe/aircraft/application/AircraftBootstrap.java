@@ -1,12 +1,18 @@
 package pt.isep.aisafe.aircraft.application;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.io.Resource;
+import org.springframework.stereotype.Component;
+import pt.isep.aisafe.aircraft.api.dto.CreateAircraftRequest;
 import pt.isep.aisafe.aircraft.domain.*;
 import pt.isep.aisafe.aircraft.infrastructure.AircraftModelRepository;
 import pt.isep.aisafe.aircraft.infrastructure.AircraftRepository;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.stereotype.Component;
 
-import java.time.LocalDate;
+import java.io.InputStream;
 import java.util.List;
 
 @Component
@@ -14,50 +20,52 @@ public class AircraftBootstrap implements CommandLineRunner {
 
     private final AircraftRepository aircraftRepository;
     private final AircraftModelRepository modelRepository;
+    private final AircraftService aircraftService;
 
-    public AircraftBootstrap(AircraftRepository aircraftRepository, AircraftModelRepository modelRepository) {
+    @Value("${aisafe.seed-file:#{null}}")
+    private Resource seedFile;
+
+    public AircraftBootstrap(AircraftRepository aircraftRepository,
+                             AircraftModelRepository modelRepository,
+                             AircraftService aircraftService) {
         this.aircraftRepository = aircraftRepository;
         this.modelRepository = modelRepository;
+        this.aircraftService = aircraftService;
     }
 
     @Override
-    public void run(String... args) {
+    public void run(String... args) throws Exception {
+        // 1. Criar Modelos Base no Catálogo (se não existirem)
         if (modelRepository.count() == 0) {
-            // Modelo 1: Airbus A320-200
             AircraftSpecs specsA320 = new AircraftSpecs(24210.0, 6100.0, 840.0, 180);
-            AircraftModel a320 = new AircraftModel(
-                    "A320-200",
-                    "Airbus",
-                    specsA320,
-                    List.of("https://example.com/images/a320.jpg")
-            );
+            AircraftModel a320 = new AircraftModel("A320-200", "Airbus", specsA320, List.of("https://example.com/a320.jpg"));
 
-            // Modelo 2: Boeing 737-800
             AircraftSpecs specsB737 = new AircraftSpecs(26020.0, 5765.0, 842.0, 189);
-            AircraftModel b737 = new AircraftModel(
-                    "B111-100",
-                    "Boeing",
-                    specsB737,
-                    List.of("https://example.com/images/b737.jpg")
-            );
+            AircraftModel b737 = new AircraftModel("B737-800", "Boeing", specsB737, List.of("https://example.com/b737.jpg"));
 
             modelRepository.saveAll(List.of(a320, b737));
+        }
 
-            if (aircraftRepository.count() == 0) {
-                // Aeronave 1
-                Aircraft aircraft1 = new Aircraft("CS-TMA", a320, LocalDate.of(2021, 3, 10), 1200.0, 950.0);
-                aircraft1.activateAircraft();
-                aircraft1.addFeature("Wi-Fi");
-                aircraft1.addFeature("Extra Legroom");
-                aircraft1.configureSeating(new SeatingPack(180, "3-3"));
+        // 2. Carregar aeronaves a partir do ficheiro JSON da instância (se configurado)
+        if (seedFile != null && seedFile.exists() && aircraftRepository.count() == 0) {
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.registerModule(new JavaTimeModule());
 
-                // Aeronave 2
-                Aircraft aircraft2 = new Aircraft("CS-TMB", b737, LocalDate.of(2019, 7, 22), 3400.0, 2800.0);
-                aircraft2.activateAircraft();
-                aircraft2.addFeature("USB Charging");
-                aircraft2.configureSeating(new SeatingPack(189, "3-3"));
+            try (InputStream inputStream = seedFile.getInputStream()) {
+                List<CreateAircraftRequest> requests = mapper.readValue(
+                        inputStream,
+                        new TypeReference<List<CreateAircraftRequest>>() {}
+                );
 
-                aircraftRepository.saveAll(List.of(aircraft1, aircraft2));
+                for (CreateAircraftRequest req : requests) {
+                    aircraftService.registerAircraft(
+                            req.registrationNumber(),
+                            req.modelName(),
+                            req.manufacturingDate(),
+                            req.totalOperationalHours(),
+                            req.totalFlightHours()
+                    );
+                }
             }
         }
     }
