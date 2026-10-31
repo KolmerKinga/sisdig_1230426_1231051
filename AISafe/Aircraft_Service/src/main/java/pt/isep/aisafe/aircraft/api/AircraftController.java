@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 @RestController
@@ -64,19 +65,17 @@ public class AircraftController {
             @RequestParam(required = false) AircraftAvailability status,
             @RequestHeader(value = ForwardingHeaders.FORWARDED_FROM, required = false) String forwardedFrom) {
 
-        // 1. Obter aeronaves da base de dados da réplica local
         List<AircraftResponse> localList = aircraftService.searchAircraft(status).stream()
                 .map(this::toResponse)
                 .toList();
 
-        // 2. Se o pedido veio reencaminhado de outra réplica, devolve apenas a lista local (evita loop infinito)
         if (forwardedFrom != null) {
             return ResponseEntity.ok(localList);
         }
 
-        // 3. Se é o nó inicial que recebeu o pedido do cliente/Postman, agrega os dados locais com os das outras réplicas
         List<AircraftResponse> result = new ArrayList<>(localList);
-        List<AircraftResponse[]> remoteResponses = peerClient.fetchFromOtherPeers("/api/aircraft", AircraftResponse[].class);
+        Class<AircraftResponse[]> responseType = AircraftResponse[].class;
+        List<AircraftResponse[]> remoteResponses = peerClient.fetchFromOtherPeers("/api/aircraft", responseType);
 
         for (AircraftResponse[] remoteArray : remoteResponses) {
             if (remoteArray != null) {
@@ -88,16 +87,18 @@ public class AircraftController {
     }
 
     private AircraftResponse toResponse(Aircraft aircraft) {
+        String modelName = aircraft.getModel() != null ? aircraft.getModel().getModelName() : null;
+        String manufacturer = aircraft.getModel() != null ? aircraft.getModel().getManufacturer() : null;
+
         return new AircraftResponse(
                 aircraft.getRegistrationNumber(),
-                aircraft.getModel().getModelName(),
-                aircraft.getModel().getManufacturer(),
+                modelName,
+                manufacturer,
                 aircraft.getStatus(),
                 aircraft.getManufacturingDate(),
                 aircraft.getTotalOperationalHours(),
                 aircraft.getTotalFlightHours(),
-                aircraft.getMeanRange(),
-                aircraft.getFeatures()
+                aircraft.getFeatures() != null ? aircraft.getFeatures() : Collections.emptyList()
         );
     }
 }

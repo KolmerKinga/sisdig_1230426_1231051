@@ -19,7 +19,7 @@ public class Aircraft {
     @Version
     private Long version;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @ManyToOne(optional = false, fetch = FetchType.EAGER)
     @JoinColumn(name = "model_id")
     private AircraftModel model;
 
@@ -39,7 +39,7 @@ public class Aircraft {
     @Column(nullable = false)
     private Double meanRange = 0.0;
 
-    @ElementCollection(fetch = FetchType.LAZY)
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
             name = "aircraft_features",
             joinColumns = @JoinColumn(name = "registration_number")
@@ -89,8 +89,19 @@ public class Aircraft {
         this.manufacturingDate = manufacturingDate;
         this.totalOperationalHours = totalOperationalHours;
         this.totalFlightHours = totalFlightHours;
-        this.meanRange = 0.0;
-        this.status = AircraftAvailability.INACTIVE;
+        this.status = AircraftAvailability.AVAILABLE;
+
+        if (model.getAircraftModelSpecs() != null) {
+            Double specRange = model.getAircraftModelSpecs().getMaximumRange();
+            this.meanRange = specRange != null ? specRange : 3000.0;
+
+            Integer specCapacity = model.getAircraftModelSpecs().getStandardSeatingCapacity();
+            int capacity = (specCapacity != null && specCapacity > 0) ? specCapacity : 180;
+            this.seatingPack = new SeatingPack(capacity, "3x3");
+        } else {
+            this.meanRange = 3000.0;
+            this.seatingPack = new SeatingPack(180, "3x3");
+        }
     }
 
     public void sendToMaintenance() {

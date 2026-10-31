@@ -13,6 +13,13 @@
 
     <artifactId>Aircraft_Management</artifactId>
 
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    </properties>
+
     <dependencies>
         <!-- Spring Boot Starters -->
         <dependency>
@@ -39,7 +46,7 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- JJWT (Necessário para o JwtService no shared/security) -->
+        <!-- JJWT -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
@@ -65,7 +72,7 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- Processador de Configurações (opcional, para mapear o AisafeProperties sem avisos do IDE) -->
+        <!-- Processador de Configurações -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-configuration-processor</artifactId>
@@ -79,5 +86,14 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

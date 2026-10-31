@@ -1,4 +1,4 @@
-package pt.isep.aisafe.airport.shared.security;
+package pt.isep.aisafe.aircraft.shared.security;
 
 import java.util.Arrays;
 

@@ -1,13 +1,13 @@
-package pt.isep.aisafe.airport.shared.security;
+package pt.isep.aisafe.aircraft.shared.security;
 
 import java.util.List;
 
-/**
- * Identity extracted from a valid JWT.
- *
- * @param subject  the "sub" claim (collaborator id in auth-service)
- * @param username the "username" claim, or the subject when absent
- * @param roles    the "roles" claim
- */
-public record AuthenticatedUser(String subject, String username, List<String> roles) {
+public record AuthenticatedUser(
+        String username,
+        String email,
+        List<String> roles
+) {
+    public AuthenticatedUser(String username, List<String> roles) {
+        this(username, null, roles);
+    }
 }

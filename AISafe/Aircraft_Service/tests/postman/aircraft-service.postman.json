@@ -1,0 +1,583 @@
+{
+  "info": {
+    "_postman_id": "a9b188c2-3f81-423a-8b1e-7f6100c812d4",
+    "name": "AISafe - aircraft-service (SIDIS WP#1)",
+    "description": "Testes distribuídos para aircraft-service: 2 réplicas (8081, 8082).\n\n1. Arranca ambas as instâncias (instance1 e instance2).\n2. No Postman, define as variáveis de ambiente com tokens JWT válidos.\n3. Executa as pastas 0 a 4 com as duas réplicas ativas.\n4. Para a instância aircraft-2 e executa a pasta 5 para validar resiliência.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "0. Health",
+      "item": [
+        {
+          "name": "aircraft-1 health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{aircraft1}}/actuator/health",
+              "host": ["{{aircraft1}}"],
+              "path": ["actuator", "health"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "aircraft-2 health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{aircraft2}}/actuator/health",
+              "host": ["{{aircraft2}}"],
+              "path": ["actuator", "health"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1. Local access",
+      "item": [
+        {
+          "name": "GET CS-TMA on aircraft-1 (stored locally)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_atcc}}"
+              }
+            ],
+            "url": {
+              "raw": "{{aircraft1}}/api/aircraft/CS-TMA",
+              "host": ["{{aircraft1}}"],
+              "path": ["api", "aircraft", "CS-TMA"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"registration CS-TMA\", () => pm.expect(pm.response.json().registrationNumber).to.eql(\"CS-TMA\"));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Forwarding and aggregation",
+      "item": [
+        {
+          "name": "GET CS-TMB on aircraft-1 (stored on aircraft-2 -> forwarded)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_atcc}}"
+              }
+            ],
+            "url": {
+              "raw": "{{aircraft1}}/api/aircraft/CS-TMB",
+              "host": ["{{aircraft1}}"],
+              "path": ["api", "aircraft", "CS-TMB"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"registration CS-TMB\", () => pm.expect(pm.response.json().registrationNumber).to.eql(\"CS-TMB\"));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET CS-XYZ (exists nowhere -> 404)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_atcc}}"
+              }
+            ],
+            "url": {
+              "raw": "{{aircraft1}}/api/aircraft/CS-XYZ",
+              "host": ["{{aircraft1}}"],
+              "path": ["api", "aircraft", "CS-XYZ"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"status 404\", () => pm.response.to.have.status(404));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search all on aircraft-2 (aggregated from both replicas)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_atcc}}"
+              }
+            ],
+            "url": {
+              "raw": "{{aircraft2}}/api/aircraft",
+              "host": ["{{aircraft2}}"],
+              "path": ["api", "aircraft"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"contains aircraft from both replicas\", () => { const regs = pm.response.json().map(a => a.registrationNumber); pm.expect(regs).to.include.members([\"CS-TMA\",\"CS-TMB\"]); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search status=AVAILABLE on aircraft-1",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_atcc}}"
+              }
+            ],
+            "url": {
+              "raw": "{{aircraft1}}/api/aircraft?status=AVAILABLE",
+              "host": ["{{aircraft1}}"],
+              "path": ["api", "aircraft"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "AVAILABLE"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Commands",
+      "item": [
+        {
+          "name": "POST CS-TMC on aircraft-2",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_backoffice}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{aircraft2}}/api/aircraft",
+              "host": ["{{aircraft2}}"],
+              "path": ["api", "aircraft"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"registrationNumber\": \"CS-TMC\",\n  \"modelName\": \"A320-200\",\n  \"manufacturingDate\": \"2022-01-15\",\n  \"totalOperationalHours\": 500.0,\n  \"totalFlightHours\": 400.0,\n  \"features\": [\"Wi-Fi\", \"USB Charging\"]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"201 or 409\", () => pm.expect(pm.response.code).to.be.oneOf([201, 409]));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET CS-TMC on aircraft-1 (forwarded to aircraft-2)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_atcc}}"
+              }
+            ],
+            "url": {
+              "raw": "{{aircraft1}}/api/aircraft/CS-TMC",
+              "host": ["{{aircraft1}}"],
+              "path": ["api", "aircraft", "CS-TMC"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST CS-TMA on aircraft-2 (exists on aircraft-1 -> 409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_backoffice}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{aircraft2}}/api/aircraft",
+              "host": ["{{aircraft2}}"],
+              "path": ["api", "aircraft"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"registrationNumber\": \"CS-TMA\",\n  \"modelName\": \"A320-200\",\n  \"manufacturingDate\": \"2021-03-10\",\n  \"totalOperationalHours\": 1200.0,\n  \"totalFlightHours\": 950.0\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"status 409\", () => pm.response.to.have.status(409));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH status of CS-TMA on aircraft-2 (forwarded)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_maintenance}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{aircraft2}}/api/aircraft/CS-TMA/status",
+              "host": ["{{aircraft2}}"],
+              "path": ["api", "aircraft", "CS-TMA", "status"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"MAINTENANCE\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"status MAINTENANCE\", () => pm.expect(pm.response.json().status).to.eql(\"MAINTENANCE\"));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH status of CS-TMA back to AVAILABLE",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_maintenance}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{aircraft1}}/api/aircraft/CS-TMA/status",
+              "host": ["{{aircraft1}}"],
+              "path": ["api", "aircraft", "CS-TMA", "status"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"AVAILABLE\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"status AVAILABLE\", () => pm.expect(pm.response.json().status).to.eql(\"AVAILABLE\"));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Security and validation",
+      "item": [
+        {
+          "name": "No token -> 401",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{aircraft1}}/api/aircraft/CS-TMA",
+              "host": ["{{aircraft1}}"],
+              "path": ["api", "aircraft", "CS-TMA"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"status 401\", () => pm.response.to.have.status(401));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "ATCC cannot register aircraft -> 403",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_atcc}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{aircraft1}}/api/aircraft",
+              "host": ["{{aircraft1}}"],
+              "path": ["api", "aircraft"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"registrationNumber\": \"CS-TMD\",\n  \"modelName\": \"A320-200\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"status 403\", () => pm.response.to.have.status(403));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Invalid status value -> 400",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_backoffice}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{aircraft1}}/api/aircraft/CS-TMA/status",
+              "host": ["{{aircraft1}}"],
+              "path": ["api", "aircraft", "CS-TMA", "status"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"INVALID_STATUS_VALUE\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"status 400\", () => pm.response.to.have.status(400));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Failure (STOP aircraft-2 before running)",
+      "item": [
+        {
+          "name": "GET CS-TMA on aircraft-1 still works (local)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_atcc}}"
+              }
+            ],
+            "url": {
+              "raw": "{{aircraft1}}/api/aircraft/CS-TMA",
+              "host": ["{{aircraft1}}"],
+              "path": ["api", "aircraft", "CS-TMA"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search on aircraft-1 -> 200 with local data",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_atcc}}"
+              }
+            ],
+            "url": {
+              "raw": "{{aircraft1}}/api/aircraft",
+              "host": ["{{aircraft1}}"],
+              "path": ["api", "aircraft"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"only aircraft-1 data\", () => pm.expect(pm.response.json().map(a => a.registrationNumber)).to.include.members([\"CS-TMA\"]));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "aircraft1",
+      "value": "http://localhost:8081"
+    },
+    {
+      "key": "aircraft2",
+      "value": "http://localhost:8082"
+    },
+    {
+      "key": "token_atcc",
+      "value": "PASTE_ATCC_TOKEN"
+    },
+    {
+      "key": "token_backoffice",
+      "value": "PASTE_BACKOFFICE_TOKEN"
+    },
+    {
+      "key": "token_maintenance",
+      "value": "PASTE_MAINTENANCE_SUPERVISOR_TOKEN"
+    }
+  ]
+}

@@ -1,19 +1,26 @@
 package pt.isep.aisafe.aircraft.shared.error;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.http.MediaType;
 
 import java.io.IOException;
 
-public class JsonErrorWriter {
+public final class JsonErrorWriter {
 
-    private static final ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
+    private static final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
+
+    private JsonErrorWriter() {}
 
     public static void writeError(HttpServletResponse response, int status, String error, String message, String path) throws IOException {
         response.setStatus(status);
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        ErrorResponse errorResponse = new ErrorResponse(status, error, message, path);
-        mapper.writeValue(response.getOutputStream(), errorResponse);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        ErrorResponse body = new ErrorResponse(status, error, message, path);
+        mapper.writeValue(response.getWriter(), body);
+    }
+
+    public static void writeError(HttpServletResponse response, int status, String error, String message) throws IOException {
+        writeError(response, status, error, message, null);
     }
 }

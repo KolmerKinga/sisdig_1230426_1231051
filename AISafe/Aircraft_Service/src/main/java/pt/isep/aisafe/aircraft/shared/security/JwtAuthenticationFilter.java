@@ -1,27 +1,20 @@
-package pt.isep.aisafe.airport.shared.security;
+package pt.isep.aisafe.aircraft.shared.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
 
-/**
- * Reads "Authorization: Bearer &lt;JWT&gt;" and authenticates the request with the roles in the token.
- * Requests without a valid token stay anonymous and are rejected (401) by the authorization rules.
- * Not a Spring bean on purpose: it is only registered inside the security filter chain.
- */
+@Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-
-    private static final String BEARER = "Bearer ";
 
     private final JwtService jwtService;
 
@@ -30,20 +23,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-                                    FilterChain chain) throws ServletException, IOException {
-        String header = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (header != null && header.startsWith(BEARER)) {
-            jwtService.parse(header.substring(BEARER.length())).ifPresent(user -> {
-                List<GrantedAuthority> authorities = user.roles().stream()
-                        .map(role -> (GrantedAuthority) new SimpleGrantedAuthority("ROLE_" + role))
-                        .toList();
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(user.username(), null, authorities);
-                authentication.setDetails(user);
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-            });
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain) throws ServletException, IOException {
+        String authHeader = request.getHeader("Authorization");
+
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            try {
+                AuthenticatedUser user = jwtService.extractUser(token);
+                if (user != null && user.roles() != null) {
+                    List<SimpleGrantedAuthority> authorities = user.roles().stream()
+                            .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+                            .toList();
+
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(user, null, authorities);
+
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
+            } catch (Exception ignored) {
+                // Token inválido ou expirado
+            }
         }
-        chain.doFilter(request, response);
+
+        filterChain.doFilter(request, response);
     }
 }
