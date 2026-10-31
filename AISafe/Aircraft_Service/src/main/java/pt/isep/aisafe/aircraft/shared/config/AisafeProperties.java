@@ -1,4 +1,4 @@
-package pt.isep.aisafe.routeflight.shared.config;
+package pt.isep.aisafe.aircraft.shared.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
@@ -10,10 +10,9 @@ import java.util.List;
 @ConfigurationProperties(prefix = "aisafe")
 public class AisafeProperties {
 
-    private String instanceName = "route-flight-1";
+    private String instanceName = "aircraft-1";
     private String secretKey = "default-secret-key-that-is-at-least-32-bytes-long!";
     private String serviceKey = "default-service-key";
-    private String seedFile;
     private List<PeerConfig> peers = new ArrayList<>();
 
     public String getInstanceName() {
@@ -38,14 +37,6 @@ public class AisafeProperties {
 
     public void setServiceKey(String serviceKey) {
         this.serviceKey = serviceKey;
-    }
-
-    public String getSeedFile() {
-        return seedFile;
-    }
-
-    public void setSeedFile(String seedFile) {
-        this.seedFile = seedFile;
     }
 
     public List<PeerConfig> getPeers() {
