@@ -1,4 +1,4 @@
-package pt.isep.aisafe.routeflight.shared.config;
+package pt.isep.aisafe.route_flight.shared.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;

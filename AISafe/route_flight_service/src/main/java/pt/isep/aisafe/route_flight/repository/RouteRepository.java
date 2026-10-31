@@ -1,23 +1,23 @@
-package pt.isep.aisafe.routeflight.infrastructure;
+package pt.isep.aisafe.route_flight.repository;
 
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import pt.isep.aisafe.routeflight.domain.Route;
-import pt.isep.aisafe.routeflight.domain.RouteStatus;
+import pt.isep.aisafe.route_flight.domain.Route;
+import pt.isep.aisafe.route_flight.domain.RouteStatus;
 
 import java.util.List;
 import java.util.Optional;
 
-public interface RouteRepository extends JpaRepository<Route, Long>, JpaSpecificationExecutor<Route> {
+public interface RouteRepository extends JpaRepository<Route, String>, JpaSpecificationExecutor<Route> {
 
-    Optional<Route> findByRouteId(Long routeId);
+    Optional<Route> findByRouteId(String routeId);
 
     Optional<Route> findByRouteName(String routeName);
 
     List<Route> findByStatus(RouteStatus status, Sort sort);
 
-    List<Route> findByOriginAirportIata(String originAirportIata);
+    List<Route> findByOriginIata(String originIata);
 
-    List<Route> findByOriginAirportIataOrDestinationAirportIata(String originAirportIata, String destinationAirportIata);
+    List<Route> findByOriginIataOrDestinationIata(String originIata, String destinationIata);
 }

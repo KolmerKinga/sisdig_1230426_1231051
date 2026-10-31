@@ -1,12 +1,12 @@
-package pt.isep.aisafe.routeflight.application;
+package pt.isep.aisafe.route_flight.application;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import pt.isep.aisafe.routeflight.domain.*;
-import pt.isep.aisafe.routeflight.infrastructure.RouteRepository;
-import pt.isep.aisafe.routeflight.shared.forwarding.PeerClient;
+import pt.isep.aisafe.route_flight.domain.*;
+import pt.isep.aisafe.route_flight.repository.RouteRepository;
+import pt.isep.aisafe.route_flight.shared.forwarding.PeerClient;
 
-import java.time.LocalDate;
+import java.util.Optional;
 
 @Service
 public class RouteService {
@@ -30,58 +30,58 @@ public class RouteService {
         validateAirportExists(originIata);
         validateAirportExists(destinationIata);
 
-        RouteHistory history = new RouteHistory(LocalDate.now(), 0);
-
         Route route = new Route(
-                requirements,
-                RouteStatus.ACTIVE,
+                routeName,
                 type,
-                history,
-                estimatedTimeHours,
-                distanceKm,
                 originIata,
                 destinationIata,
-                routeName
+                estimatedTimeHours,
+                distanceKm,
+                requirements
         );
 
         return routeRepository.save(route);
     }
 
     @Transactional
-    public Route activateRoute(Long routeId) {
+    public Route activateRoute(String routeId) {
         Route route = getRouteById(routeId);
         route.activateRoute();
         return routeRepository.save(route);
     }
 
     @Transactional
-    public Route suspendRoute(Long routeId) {
+    public Route suspendRoute(String routeId) {
         Route route = getRouteById(routeId);
         route.suspendRoute();
         return routeRepository.save(route);
     }
 
     @Transactional
-    public Route retireRoute(Long routeId) {
+    public Route retireRoute(String routeId) {
         Route route = getRouteById(routeId);
         route.retireRoute();
         return routeRepository.save(route);
     }
 
     @Transactional(readOnly = true)
-    public Route getRouteById(Long routeId) {
+    public Route getRouteById(String routeId) {
         return routeRepository.findByRouteId(routeId)
                 .orElseThrow(() -> new IllegalArgumentException("Route not found with ID: " + routeId));
     }
 
+    @Transactional(readOnly = true)
+    public Optional<Route> findById(String routeId) {
+        return routeRepository.findByRouteId(routeId);
+    }
+
     private void validateAirportExists(String iataCode) {
         try {
-            Boolean exists = peerClient.getForObject("http://airport-service/api/airports/" + iataCode + "/exists", Boolean.class);
+            Boolean exists = peerClient.getForObject("http://localhost:8081/api/airports/" + iataCode + "/exists", Boolean.class);
             if (exists == null || !exists) {
                 throw new IllegalArgumentException("Airport with IATA code '" + iataCode + "' was not found.");
             }
         } catch (Exception e) {
-            // Log do erro e fallback caso o serviço externo esteja offline durante desenvolvimento
             System.err.println("Warning: Could not contact Airport_Service: " + e.getMessage());
         }
     }

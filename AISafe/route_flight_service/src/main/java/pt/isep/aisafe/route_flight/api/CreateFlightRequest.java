@@ -1,4 +1,4 @@
-package pt.isep.aisafe.routeflight.api.dto;
+package pt.isep.aisafe.route_flight.api;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 public record CreateFlightRequest(
         @NotNull(message = "Route ID is required")
-        Long routeId,
+        String routeId,
 
         @NotBlank(message = "Aircraft registration is required")
         String aircraftRegistration,

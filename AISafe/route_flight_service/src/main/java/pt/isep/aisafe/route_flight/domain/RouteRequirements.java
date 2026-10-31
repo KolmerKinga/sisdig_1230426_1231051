@@ -1,4 +1,4 @@
-package pt.isep.aisafe.routeflight.domain;
+package pt.isep.aisafe.route_flight.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;

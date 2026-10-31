@@ -1,143 +1,112 @@
-package pt.isep.aisafe.routeflight.domain;
+package pt.isep.aisafe.route_flight.domain;
 
 import jakarta.persistence.*;
+import java.util.Objects;
+import java.util.UUID;
 
 @Entity
-@Table(name = "company_routes")
+@Table(name = "routes")
 public class Route {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "route_id")
-    private Long routeId;
+    @Column(name = "route_id", nullable = false, updatable = false)
+    private String routeId;
 
-    @Version
-    private Long version;
-
-    @Column(name = "route_name", nullable = false)
+    @Column(name = "route_name", nullable = false, unique = true)
     private String routeName;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
-    private RouteStatus status;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false)
     private RouteType type;
 
-    @Column(name = "origin_airport_iata", nullable = false)
-    private String originAirportIata;
+    @Column(name = "origin_iata", nullable = false, length = 3)
+    private String originIata;
 
-    @Column(name = "destination_airport_iata", nullable = false)
-    private String destinationAirportIata;
+    @Column(name = "destination_iata", nullable = false, length = 3)
+    private String destinationIata;
 
-    @Embedded
-    private RouteHistory routeHistory;
-
-    @Column(name = "estimated_flight_time_hours", nullable = false)
-    private Double estimatedFlightTimeHours;
+    @Column(name = "estimated_time_hours", nullable = false)
+    private Double estimatedTimeHours;
 
     @Column(name = "distance_km", nullable = false)
     private Double distanceKm;
 
     @Embedded
-    private RouteRequirements routeRequirements;
+    private RouteRequirements requirements;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private RouteStatus status;
 
     protected Route() {}
 
-    public Route(RouteRequirements routeRequirements, RouteStatus status, RouteType type,
-                 RouteHistory routeHistory, Double estimatedFlightTimeHours,
-                 String originAirportIata, String destinationAirportIata, String routeName) {
-        this(routeRequirements, status, type, routeHistory, estimatedFlightTimeHours,
-                1.0, originAirportIata, destinationAirportIata, routeName);
-    }
-
-    public Route(RouteRequirements routeRequirements, RouteStatus status, RouteType type,
-                 RouteHistory routeHistory, Double estimatedFlightTimeHours, Double distanceKm,
-                 String originAirportIata, String destinationAirportIata, String routeName) {
-        if (originAirportIata == null || originAirportIata.isBlank()) {
-            throw new IllegalArgumentException("Origin airport IATA code cannot be empty");
-        }
-        if (destinationAirportIata == null || destinationAirportIata.isBlank()) {
-            throw new IllegalArgumentException("Destination airport IATA code cannot be empty");
-        }
-        if (originAirportIata.trim().equalsIgnoreCase(destinationAirportIata.trim())) {
-            throw new IllegalArgumentException("Origin and destination airports cannot be equal");
-        }
-        if (estimatedFlightTimeHours == null || estimatedFlightTimeHours <= 0) {
-            throw new IllegalArgumentException("Estimated flight time must be positive");
-        }
-        if (distanceKm == null || distanceKm <= 0) {
-            throw new IllegalArgumentException("Distance must be positive");
-        }
-
-        this.routeRequirements = routeRequirements;
-        this.status = status != null ? status : RouteStatus.ACTIVE;
-        this.type = type;
-        this.routeHistory = routeHistory;
-        this.estimatedFlightTimeHours = estimatedFlightTimeHours;
-        this.distanceKm = distanceKm;
-        this.originAirportIata = originAirportIata.trim().toUpperCase();
-        this.destinationAirportIata = destinationAirportIata.trim().toUpperCase();
+    public Route(String routeName, RouteType type, String originIata, String destinationIata,
+                 Double estimatedTimeHours, Double distanceKm, RouteRequirements requirements) {
+        this.routeId = UUID.randomUUID().toString();
         this.routeName = routeName;
-    }
-
-    public void activateRoute() {
-        if (status == RouteStatus.ARCHIVED) {
-            throw new IllegalStateException("Archived routes cannot be activated");
-        }
+        this.type = type;
+        this.originIata = originIata;
+        this.destinationIata = destinationIata;
+        this.estimatedTimeHours = estimatedTimeHours;
+        this.distanceKm = distanceKm;
+        this.requirements = requirements;
         this.status = RouteStatus.ACTIVE;
     }
 
-    public void suspendRoute() {
-        if (status == RouteStatus.ARCHIVED) {
-            throw new IllegalStateException("Archived routes cannot be suspended");
-        }
-        this.status = RouteStatus.INACTIVE;
-    }
-
-    public void retireRoute() {
-        this.status = RouteStatus.ARCHIVED;
-    }
-
-    public void updateEstimatedFlightTime(Double estimatedFlightTimeHours) {
-        if (estimatedFlightTimeHours == null || estimatedFlightTimeHours <= 0) {
-            throw new IllegalArgumentException("Estimated flight time must be positive");
-        }
-        this.estimatedFlightTimeHours = estimatedFlightTimeHours;
-    }
-
-    public void changeDestination(String newDestinationIata) {
-        if (newDestinationIata == null || newDestinationIata.isBlank()) {
-            throw new IllegalArgumentException("Destination airport IATA code cannot be empty");
-        }
-        if (newDestinationIata.trim().equalsIgnoreCase(originAirportIata)) {
-            throw new IllegalArgumentException("Destination airport cannot equal origin airport");
-        }
-        this.destinationAirportIata = newDestinationIata.trim().toUpperCase();
-    }
-
-    public void updateRoute(String routeName, RouteStatus status, RouteType type,
-                            RouteHistory routeHistory, Double estimatedFlightTimeHours, Double distanceKm,
-                            String originAirportIata, String destinationAirportIata,
-                            RouteRequirements routeRequirements) {
-        if (originAirportIata == null || originAirportIata.isBlank()) {
-            throw new IllegalArgumentException("Origin airport IATA code cannot be empty");
-        }
-        if (destinationAirportIata == null || destinationAirportIata.isBlank()) {
-            throw new IllegalArgumentException("Destination airport IATA code cannot be empty");
-        }
-        if (originAirportIata.trim().equalsIgnoreCase(destinationAirportIata.trim())) {
-            throw new IllegalArgumentException("Origin and destination airports cannot be equal");
-        }
-        if (estimatedFlightTimeHours == null || estimatedFlightTimeHours <= 0) {
-            throw new IllegalArgumentException("Estimated flight time must be positive");
-        }
-        if (distanceKm == null || distanceKm <= 0) {
-            throw new IllegalArgumentException("Distance must be positive");
-        }
-
+    public Route(RouteRequirements requirements, RouteStatus status, RouteType type,
+                 Object routeHistory, Double estimatedTimeHours, Double distanceKm,
+                 String originIata, String destinationIata, String routeName) {
+        this.routeId = UUID.randomUUID().toString();
         this.routeName = routeName;
-        this.status = status;
         this.type = type;
-        this.
+        this.originIata = originIata;
+        this.destinationIata = destinationIata;
+        this.estimatedTimeHours = estimatedTimeHours;
+        this.distanceKm = distanceKm;
+        this.requirements = requirements;
+        this.status = status != null ? status : RouteStatus.ACTIVE;
+    }
+
+    public String getRouteId() { return routeId; }
+    public String getRouteName() { return routeName; }
+    public RouteType getType() { return type; }
+    public String getOriginIata() { return originIata; }
+    public String getOriginAirportIata() { return originIata; }
+    public String getDestinationIata() { return destinationIata; }
+    public String getDestinationAirportIata() { return destinationIata; }
+    public Double getEstimatedTimeHours() { return estimatedTimeHours; }
+    public Double getEstimatedFlightTimeHours() { return estimatedTimeHours; }
+    public Double getDistanceKm() { return distanceKm; }
+    public RouteRequirements getRequirements() { return requirements; }
+    public RouteRequirements getRouteRequirements() { return requirements; }
+    public Object getRouteHistory() { return null; }
+    public RouteStatus getStatus() { return status; }
+
+    public boolean isOperational() { return status == RouteStatus.ACTIVE; }
+    public void activate() { this.status = RouteStatus.ACTIVE; }
+    public void activateRoute() { this.status = RouteStatus.ACTIVE; }
+    public void deactivate() { this.status = RouteStatus.INACTIVE; }
+    public void suspendRoute() { this.status = RouteStatus.INACTIVE; }
+    public void retireRoute() { this.status = RouteStatus.INACTIVE; }
+
+    public void setRouteName(String routeName) { this.routeName = routeName; }
+    public void setType(RouteType type) { this.type = type; }
+    public void setOriginIata(String originIata) { this.originIata = originIata; }
+    public void setDestinationIata(String destinationIata) { this.destinationIata = destinationIata; }
+    public void setEstimatedTimeHours(Double estimatedTimeHours) { this.estimatedTimeHours = estimatedTimeHours; }
+    public void setDistanceKm(Double distanceKm) { this.distanceKm = distanceKm; }
+    public void setRequirements(RouteRequirements requirements) { this.requirements = requirements; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Route route = (Route) o;
+        return Objects.equals(routeId, route.routeId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(routeId);
+    }
+}

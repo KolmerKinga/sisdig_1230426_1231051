@@ -1,4 +1,4 @@
-package pt.isep.aisafe.routeflight.shared.error;
+package pt.isep.aisafe.route_flight.shared.error;
 
 import java.time.LocalDateTime;
 

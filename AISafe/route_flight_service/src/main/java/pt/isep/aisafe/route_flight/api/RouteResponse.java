@@ -1,13 +1,13 @@
-package pt.isep.aisafe.routeflight.api.dto;
+package pt.isep.aisafe.route_flight.api;
 
-import pt.isep.aisafe.routeflight.domain.Route;
-import pt.isep.aisafe.routeflight.domain.RouteStatus;
-import pt.isep.aisafe.routeflight.domain.RouteType;
+import pt.isep.aisafe.route_flight.domain.Route;
+import pt.isep.aisafe.route_flight.domain.RouteStatus;
+import pt.isep.aisafe.route_flight.domain.RouteType;
 
 import java.time.LocalDate;
 
 public record RouteResponse(
-        Long routeId,
+        String routeId,
         String routeName,
         RouteType type,
         RouteStatus status,
@@ -31,9 +31,9 @@ public record RouteResponse(
                 route.getDestinationAirportIata(),
                 route.getEstimatedFlightTimeHours(),
                 route.getDistanceKm(),
-                route.getRouteHistory() != null ? route.getRouteHistory().getRouteBegin() : null,
-                route.getRouteHistory() != null ? route.getRouteHistory().getRouteFinish() : null,
-                route.getRouteHistory() != null ? route.getRouteHistory().getRouteUsage() : null,
+                null,
+                null,
+                null,
                 route.getRouteRequirements() != null ? route.getRouteRequirements().getRequiredRange() : null,
                 route.getRouteRequirements() != null ? route.getRouteRequirements().getRequiredCapacity() : null
         );

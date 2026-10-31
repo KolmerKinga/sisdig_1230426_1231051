@@ -1,4 +1,4 @@
-package pt.isep.aisafe.routeflight.api;
+package pt.isep.aisafe.route_flight.api;
 
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
@@ -6,14 +6,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import pt.isep.aisafe.routeflight.api.dto.CreateRouteRequest;
-import pt.isep.aisafe.routeflight.api.dto.RouteResponse;
-import pt.isep.aisafe.routeflight.application.RouteExportService;
-import pt.isep.aisafe.routeflight.application.RouteSearchService;
-import pt.isep.aisafe.routeflight.application.RouteService;
-import pt.isep.aisafe.routeflight.domain.Route;
-import pt.isep.aisafe.routeflight.domain.RouteRequirements;
-import pt.isep.aisafe.routeflight.domain.RouteStatus;
+import pt.isep.aisafe.route_flight.application.RouteExportService;
+import pt.isep.aisafe.route_flight.application.RouteSearchService;
+import pt.isep.aisafe.route_flight.application.RouteService;
+import pt.isep.aisafe.route_flight.domain.Route;
+import pt.isep.aisafe.route_flight.domain.RouteRequirements;
+import pt.isep.aisafe.route_flight.domain.RouteStatus;
 
 import java.util.List;
 
@@ -51,7 +49,7 @@ public class RouteController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<RouteResponse> getRouteById(@PathVariable Long id) {
+    public ResponseEntity<RouteResponse> getRouteById(@PathVariable String id) {
         Route route = routeService.getRouteById(id);
         return ResponseEntity.ok(RouteResponse.fromDomain(route));
     }
@@ -78,19 +76,19 @@ public class RouteController {
     }
 
     @PatchMapping("/{id}/activate")
-    public ResponseEntity<RouteResponse> activateRoute(@PathVariable Long id) {
+    public ResponseEntity<RouteResponse> activateRoute(@PathVariable String id) {
         Route route = routeService.activateRoute(id);
         return ResponseEntity.ok(RouteResponse.fromDomain(route));
     }
 
     @PatchMapping("/{id}/suspend")
-    public ResponseEntity<RouteResponse> suspendRoute(@PathVariable Long id) {
+    public ResponseEntity<RouteResponse> suspendRoute(@PathVariable String id) {
         Route route = routeService.suspendRoute(id);
         return ResponseEntity.ok(RouteResponse.fromDomain(route));
     }
 
     @PatchMapping("/{id}/retire")
-    public ResponseEntity<RouteResponse> retireRoute(@PathVariable Long id) {
+    public ResponseEntity<RouteResponse> retireRoute(@PathVariable String id) {
         Route route = routeService.retireRoute(id);
         return ResponseEntity.ok(RouteResponse.fromDomain(route));
     }

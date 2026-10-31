@@ -1,11 +1,11 @@
-package pt.isep.aisafe.routeflight.application;
+package pt.isep.aisafe.route_flight.application;
 
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import pt.isep.aisafe.routeflight.domain.Route;
-import pt.isep.aisafe.routeflight.domain.RouteStatus;
-import pt.isep.aisafe.routeflight.infrastructure.RouteRepository;
+import pt.isep.aisafe.route_flight.domain.Route;
+import pt.isep.aisafe.route_flight.domain.RouteStatus;
+import pt.isep.aisafe.route_flight.repository.RouteRepository;
 
 import java.util.List;
 import java.util.Optional;
@@ -36,6 +36,6 @@ public class RouteSearchService {
 
     @Transactional(readOnly = true)
     public List<Route> findByAirport(String iataCode) {
-        return routeRepository.findByOriginAirportIataOrDestinationAirportIata(iataCode, iataCode);
+        return routeRepository.findByOriginIataOrDestinationIata(iataCode, iataCode);
     }
 }

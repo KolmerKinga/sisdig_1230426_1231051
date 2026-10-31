@@ -1,10 +1,10 @@
-package pt.isep.aisafe.routeflight.application;
+package pt.isep.aisafe.route_flight.application;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import pt.isep.aisafe.routeflight.domain.Flight;
-import pt.isep.aisafe.routeflight.domain.FlightStatus;
-import pt.isep.aisafe.routeflight.infrastructure.FlightRepository;
+import pt.isep.aisafe.route_flight.domain.Flight;
+import pt.isep.aisafe.route_flight.domain.FlightStatus;
+import pt.isep.aisafe.route_flight.repository.FlightRepository;
 
 import java.util.List;
 
@@ -22,7 +22,7 @@ public class FlightUtilizationReportService {
         List<Flight> flights = flightRepository.findByAircraftRegistration(aircraftRegistration);
 
         return flights.stream()
-                .filter(f -> f.getFlightStatus() == FlightStatus.ARRIVED)
+                .filter(f -> f.getFlightStatus() == FlightStatus.COMPLETED)
                 .mapToDouble(f -> f.getFlightHours() != null ? f.getFlightHours() : 0.0)
                 .sum();
     }
@@ -30,7 +30,7 @@ public class FlightUtilizationReportService {
     @Transactional(readOnly = true)
     public long countCompletedFlightsForAircraft(String aircraftRegistration) {
         return flightRepository.findByAircraftRegistration(aircraftRegistration).stream()
-                .filter(f -> f.getFlightStatus() == FlightStatus.ARRIVED)
+                .filter(f -> f.getFlightStatus() == FlightStatus.COMPLETED)
                 .count();
     }
 }

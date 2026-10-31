@@ -1,4 +1,4 @@
-package pt.isep.aisafe.routeflight.shared.forwarding;
+package pt.isep.aisafe.route_flight.shared.forwarding;
 
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -6,7 +6,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-import pt.isep.aisafe.routeflight.shared.config.AisafeProperties;
+import pt.isep.aisafe.route_flight.shared.config.AisafeProperties;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +19,22 @@ public class PeerClient {
 
     public PeerClient(AisafeProperties aisafeProperties) {
         this.aisafeProperties = aisafeProperties;
+    }
+
+    public <T> T getForObject(String url, Class<T> responseType) {
+        try {
+            return restTemplate.getForObject(url, responseType);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public <T> T postForObject(String url, Object request, Class<T> responseType) {
+        try {
+            return restTemplate.postForObject(url, request, responseType);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public <T> List<T> fetchFromOtherPeers(String path, Class<T> responseType) {

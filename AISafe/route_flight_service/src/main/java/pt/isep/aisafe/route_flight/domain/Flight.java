@@ -1,31 +1,24 @@
-package pt.isep.aisafe.routeflight.domain;
+package pt.isep.aisafe.route_flight.domain;
 
 import jakarta.persistence.*;
-
+import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
+import java.util.Objects;
+import java.util.UUID;
 
 @Entity
-@Table(name = "company_flights")
+@Table(name = "flights")
 public class Flight {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long flightId;
+    @Column(name = "flight_id", nullable = false, updatable = false)
+    private String flightId;
 
-    @Version
-    private Long version;
-
-    @ManyToOne(optional = false, fetch = FetchType.EAGER)
-    @JoinColumn(name = "route_id", nullable = false)
-    private Route route;
+    @Column(name = "route_id", nullable = false)
+    private String routeId;
 
     @Column(name = "aircraft_registration", nullable = false)
     private String aircraftRegistration;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "flight_status", nullable = false)
-    private FlightStatus flightStatus;
 
     @Column(name = "scheduled_departure", nullable = false)
     private LocalDateTime scheduledDeparture;
@@ -33,94 +26,78 @@ public class Flight {
     @Column(name = "scheduled_arrival", nullable = false)
     private LocalDateTime scheduledArrival;
 
-    @Column(name = "time_of_departure")
-    private LocalDateTime timeOfDeparture;
-
-    @Column(name = "time_of_arrival")
-    private LocalDateTime timeOfArrival;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private FlightStatus status;
 
     protected Flight() {}
 
-    public Flight(Route route, String aircraftRegistration, LocalDateTime scheduledDeparture,
-                  LocalDateTime scheduledArrival) {
-        if (route == null) {
-            throw new IllegalArgumentException("Route cannot be null");
-        }
-        if (aircraftRegistration == null || aircraftRegistration.isBlank()) {
-            throw new IllegalArgumentException("Aircraft registration cannot be empty");
-        }
-        if (scheduledDeparture == null || scheduledArrival == null) {
-            throw new IllegalArgumentException("Scheduled departure and arrival cannot be null");
-        }
-        if (scheduledArrival.isBefore(scheduledDeparture)) {
-            throw new IllegalArgumentException("Scheduled arrival must be after scheduled departure");
-        }
-
-        this.route = route;
+    public Flight(String routeId, String aircraftRegistration, LocalDateTime scheduledDeparture, LocalDateTime scheduledArrival) {
+        this.flightId = UUID.randomUUID().toString();
+        this.routeId = routeId;
         this.aircraftRegistration = aircraftRegistration;
         this.scheduledDeparture = scheduledDeparture;
         this.scheduledArrival = scheduledArrival;
-        this.flightStatus = FlightStatus.SCHEDULED;
+        this.status = FlightStatus.SCHEDULED;
     }
 
-    public void updateAircraft(String newAircraftRegistration) {
-        if (newAircraftRegistration == null || newAircraftRegistration.isBlank()) {
-            throw new IllegalArgumentException("Aircraft registration cannot be empty");
+    public Flight(Route route, String aircraftRegistration, LocalDateTime scheduledDeparture, LocalDateTime scheduledArrival) {
+        this.flightId = UUID.randomUUID().toString();
+        this.routeId = route != null ? route.getRouteId() : null;
+        this.aircraftRegistration = aircraftRegistration;
+        this.scheduledDeparture = scheduledDeparture;
+        this.scheduledArrival = scheduledArrival;
+        this.status = FlightStatus.SCHEDULED;
+    }
+
+    public String getFlightId() { return flightId; }
+    public String getRouteId() { return routeId; }
+    public String getRoute() { return routeId; }
+    public void setRoute(String routeId) { this.routeId = routeId; }
+    public void setRoute(Route route) { this.routeId = route != null ? route.getRouteId() : null; }
+
+    public String getAircraftRegistration() { return aircraftRegistration; }
+    public LocalDateTime getScheduledDeparture() { return scheduledDeparture; }
+    public LocalDateTime getTimeOfDeparture() { return scheduledDeparture; }
+    public LocalDateTime getScheduledArrival() { return scheduledArrival; }
+    public LocalDateTime getTimeOfArrival() { return scheduledArrival; }
+    public FlightStatus getStatus() { return status; }
+    public FlightStatus getFlightStatus() { return status; }
+
+    public Double getFlightHours() {
+        if (scheduledDeparture != null && scheduledArrival != null) {
+            return Duration.between(scheduledDeparture, scheduledArrival).toMinutes() / 60.0;
         }
-        if (this.flightStatus == FlightStatus.ARRIVED) {
-            throw new IllegalStateException("Cannot change aircraft of completed flight");
-        }
-        this.aircraftRegistration = newAircraftRegistration;
+        return 0.0;
     }
 
-    public void changeRoute(Route newRoute) {
-        if (newRoute == null) {
-            throw new IllegalArgumentException("Route cannot be null");
-        }
-        if (this.flightStatus == FlightStatus.ARRIVED) {
-            throw new IllegalStateException("Cannot change route of completed flight");
-        }
-        this.route = newRoute;
+    public void startFlight() { this.status = FlightStatus.IN_AIR; }
+    public void completeFlight() { this.status = FlightStatus.COMPLETED; }
+    public void cancelFlight() { this.status = FlightStatus.CANCELLED; }
+    public void cancel() { this.status = FlightStatus.CANCELLED; }
+    public void complete() { this.status = FlightStatus.COMPLETED; }
+    public void markInAir() { this.status = FlightStatus.IN_AIR; }
+    public void markDelayed() { this.status = FlightStatus.DELAYED; }
+
+    public void updateSchedule(LocalDateTime departure, LocalDateTime arrival) {
+        this.scheduledDeparture = departure;
+        this.scheduledArrival = arrival;
     }
 
-    public void startFlight() {
-        if (flightStatus != FlightStatus.SCHEDULED) {
-            throw new IllegalStateException("Flight cannot be started");
-        }
-        this.flightStatus = FlightStatus.IN_PROGRESS;
-        this.timeOfDeparture = LocalDateTime.now();
+    public void assignAircraft(String aircraftRegistration) {
+        this.aircraftRegistration = aircraftRegistration;
     }
 
-    public void completeFlight() {
-        if (this.flightStatus != FlightStatus.IN_PROGRESS) {
-            throw new IllegalStateException("Flight is not in progress");
-        }
-        this.flightStatus = FlightStatus.ARRIVED;
-        this.timeOfArrival = LocalDateTime.now();
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Flight flight = (Flight) o;
+        return Objects.equals(flightId, flight.flightId);
     }
 
-    public void cancelFlight() {
-        if (flightStatus == FlightStatus.ARRIVED) {
-            throw new IllegalStateException("Completed flight cannot be cancelled");
-        }
-        this.flightStatus = FlightStatus.CANCELED;
+    @Override
+    public int hashCode() {
+        return Objects.hash(flightId);
     }
-
-    public boolean isActive() {
-        return flightStatus == FlightStatus.IN_PROGRESS;
-    }
-
-    public Long getFlightId() {
-        return flightId;
-    }
-
-    public Route getRoute() {
-        return route;
-    }
-
-    public String getAircraftRegistration() {
-        return aircraftRegistration;
-    }
-
-    public FlightStatus getFlightStatus() {
-        return flightStatus;
+}

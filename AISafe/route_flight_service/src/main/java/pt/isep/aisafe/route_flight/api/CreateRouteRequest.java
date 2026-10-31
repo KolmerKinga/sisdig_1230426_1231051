@@ -1,9 +1,9 @@
-package pt.isep.aisafe.routeflight.api.dto;
+package pt.isep.aisafe.route_flight.api;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import pt.isep.aisafe.routeflight.domain.RouteType;
+import pt.isep.aisafe.route_flight.domain.RouteType;
 
 public record CreateRouteRequest(
         @NotBlank(message = "Route name is required")

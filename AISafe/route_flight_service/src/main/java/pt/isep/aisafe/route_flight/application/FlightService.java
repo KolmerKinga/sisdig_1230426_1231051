@@ -1,15 +1,16 @@
-package pt.isep.aisafe.routeflight.application;
+package pt.isep.aisafe.route_flight.application;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import pt.isep.aisafe.routeflight.domain.Flight;
-import pt.isep.aisafe.routeflight.domain.Route;
-import pt.isep.aisafe.routeflight.infrastructure.FlightRepository;
-import pt.isep.aisafe.routeflight.infrastructure.RouteRepository;
-import pt.isep.aisafe.routeflight.shared.forwarding.PeerClient;
+import pt.isep.aisafe.route_flight.domain.Flight;
+import pt.isep.aisafe.route_flight.domain.Route;
+import pt.isep.aisafe.route_flight.repository.FlightRepository;
+import pt.isep.aisafe.route_flight.repository.RouteRepository;
+import pt.isep.aisafe.route_flight.shared.forwarding.PeerClient;
 
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class FlightService {
@@ -25,7 +26,7 @@ public class FlightService {
     }
 
     @Transactional
-    public Flight scheduleFlight(Long routeId, String aircraftRegistration, LocalDateTime scheduledDeparture, LocalDateTime scheduledArrival) {
+    public Flight scheduleFlight(String routeId, String aircraftRegistration, LocalDateTime scheduledDeparture, LocalDateTime scheduledArrival) {
         Route route = routeRepository.findByRouteId(routeId)
                 .orElseThrow(() -> new IllegalArgumentException("Route not found with ID: " + routeId));
 
@@ -48,27 +49,26 @@ public class FlightService {
     }
 
     @Transactional
-    public Flight startFlight(Long flightId) {
+    public Flight startFlight(String flightId) {
         Flight flight = getFlightById(flightId);
         flight.startFlight();
         return flightRepository.save(flight);
     }
 
     @Transactional
-    public Flight completeFlight(Long flightId) {
+    public Flight completeFlight(String flightId) {
         Flight flight = getFlightById(flightId);
         flight.completeFlight();
 
-        if (flight.getRoute().getRouteHistory() != null) {
-            flight.getRoute().getRouteHistory().incrementUsage();
-        }
+        Optional<Route> routeOpt = routeRepository.findByRouteId(flight.getRouteId());
+        Double distanceKm = routeOpt.map(Route::getDistanceKm).orElse(0.0);
 
         Double flightHours = flight.getFlightHours();
         if (flightHours != null && flightHours > 0) {
             updateAircraftMetricsInAircraftService(
                     flight.getAircraftRegistration(),
                     flightHours,
-                    flight.getRoute().getDistanceKm()
+                    distanceKm
             );
         }
 
@@ -76,21 +76,26 @@ public class FlightService {
     }
 
     @Transactional
-    public Flight cancelFlight(Long flightId) {
+    public Flight cancelFlight(String flightId) {
         Flight flight = getFlightById(flightId);
         flight.cancelFlight();
         return flightRepository.save(flight);
     }
 
     @Transactional(readOnly = true)
-    public Flight getFlightById(Long flightId) {
+    public Flight getFlightById(String flightId) {
         return flightRepository.findByFlightId(flightId)
                 .orElseThrow(() -> new IllegalArgumentException("Flight not found with ID: " + flightId));
     }
 
+    @Transactional(readOnly = true)
+    public Optional<Flight> findById(String flightId) {
+        return flightRepository.findByFlightId(flightId);
+    }
+
     private void validateAircraftAvailable(String aircraftRegistration) {
         try {
-            Map<?, ?> aircraftDto = peerClient.getForObject("http://aircraft-service/api/aircraft/" + aircraftRegistration, Map.class);
+            Map<?, ?> aircraftDto = peerClient.getForObject("http://localhost:8081/api/aircraft/" + aircraftRegistration, Map.class);
             if (aircraftDto != null) {
                 Object status = aircraftDto.get("status");
                 if (status != null && !"AVAILABLE".equals(status.toString())) {
@@ -105,7 +110,7 @@ public class FlightService {
     private void updateAircraftMetricsInAircraftService(String registration, Double flightHours, Double distanceKm) {
         try {
             Map<String, Object> body = Map.of("flightHours", flightHours, "distanceKm", distanceKm);
-            peerClient.postForObject("http://aircraft-service/api/aircraft/" + registration + "/update-metrics", body, Void.class);
+            peerClient.postForObject("http://localhost:8081/api/aircraft/" + registration + "/update-metrics", body, Void.class);
         } catch (Exception e) {
             System.err.println("Failed to update aircraft metrics: " + e.getMessage());
         }

@@ -1,9 +1,9 @@
-package pt.isep.aisafe.routeflight.application;
+package pt.isep.aisafe.route_flight.application;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import pt.isep.aisafe.routeflight.domain.Route;
-import pt.isep.aisafe.routeflight.infrastructure.RouteRepository;
+import pt.isep.aisafe.route_flight.domain.Route;
+import pt.isep.aisafe.route_flight.repository.RouteRepository;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package pt.isep.aisafe.routeflight.shared.audit;
+package pt.isep.aisafe.route_flight.shared.audit;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import pt.isep.aisafe.routeflight.shared.forwarding.ForwardingHeaders;
+import pt.isep.aisafe.route_flight.shared.forwarding.ForwardingHeaders;
 
 import java.io.IOException;
 

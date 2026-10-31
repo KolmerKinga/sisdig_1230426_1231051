@@ -1,4 +1,4 @@
-package pt.isep.aisafe.routeflight.shared.config;
+package pt.isep.aisafe.route_flight.shared.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

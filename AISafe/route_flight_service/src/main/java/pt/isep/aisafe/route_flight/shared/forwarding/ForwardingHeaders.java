@@ -1,4 +1,4 @@
-package pt.isep.aisafe.routeflight.shared.forwarding;
+package pt.isep.aisafe.route_flight.shared.forwarding;
 
 public final class ForwardingHeaders {
     public static final String FORWARDED_BY = "X-Forwarded-By";

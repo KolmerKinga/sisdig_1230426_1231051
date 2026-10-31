@@ -1,4 +1,4 @@
-package pt.isep.aisafe.routeflight.application;
+package pt.isep.aisafe.route_flight.application;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -7,10 +7,10 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
-import pt.isep.aisafe.routeflight.domain.Route;
-import pt.isep.aisafe.routeflight.domain.RouteRequirements;
-import pt.isep.aisafe.routeflight.domain.RouteType;
-import pt.isep.aisafe.routeflight.shared.config.AisafeProperties;
+import pt.isep.aisafe.route_flight.domain.Route;
+import pt.isep.aisafe.route_flight.domain.RouteRequirements;
+import pt.isep.aisafe.route_flight.domain.RouteType;
+import pt.isep.aisafe.route_flight.shared.config.AisafeProperties;
 
 import java.io.InputStream;
 import java.time.LocalDateTime;

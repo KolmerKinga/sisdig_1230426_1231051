@@ -1,9 +1,9 @@
-package pt.isep.aisafe.routeflight.domain;
+package pt.isep.aisafe.route_flight.domain;
 
 public enum FlightStatus {
     SCHEDULED,
-    DELAYED,
-    IN_PROGRESS,
-    ARRIVED,
-    CANCELED
+    IN_AIR,
+    COMPLETED,
+    CANCELLED,
+    DELAYED
 }

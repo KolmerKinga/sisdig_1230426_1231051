@@ -1,13 +1,13 @@
-package pt.isep.aisafe.routeflight.api.dto;
+package pt.isep.aisafe.route_flight.api;
 
-import pt.isep.aisafe.routeflight.domain.Flight;
-import pt.isep.aisafe.routeflight.domain.FlightStatus;
+import pt.isep.aisafe.route_flight.domain.Flight;
+import pt.isep.aisafe.route_flight.domain.FlightStatus;
 
 import java.time.LocalDateTime;
 
 public record FlightResponse(
-        Long flightId,
-        Long routeId,
+        String flightId,
+        String routeId,
         String routeName,
         String aircraftRegistration,
         FlightStatus status,
@@ -20,8 +20,8 @@ public record FlightResponse(
     public static FlightResponse fromDomain(Flight flight) {
         return new FlightResponse(
                 flight.getFlightId(),
-                flight.getRoute() != null ? flight.getRoute().getRouteId() : null,
-                flight.getRoute() != null ? flight.getRoute().getRouteName() : null,
+                flight.getRouteId(),
+                null,
                 flight.getAircraftRegistration(),
                 flight.getFlightStatus(),
                 flight.getScheduledDeparture(),

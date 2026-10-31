@@ -1,4 +1,4 @@
-package pt.isep.aisafe.routeflight.shared.forwarding;
+package pt.isep.aisafe.route_flight.shared.forwarding;
 
 import java.util.ArrayList;
 import java.util.List;

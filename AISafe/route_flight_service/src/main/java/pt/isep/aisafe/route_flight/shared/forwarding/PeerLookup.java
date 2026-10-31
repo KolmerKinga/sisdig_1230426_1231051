@@ -1,7 +1,7 @@
-package pt.isep.aisafe.routeflight.shared.forwarding;
+package pt.isep.aisafe.route_flight.shared.forwarding;
 
 import org.springframework.stereotype.Component;
-import pt.isep.aisafe.routeflight.shared.config.AisafeProperties;
+import pt.isep.aisafe.route_flight.shared.config.AisafeProperties;
 
 import java.util.List;
 import java.util.Optional;
