@@ -1,0 +1,22 @@
+{
+  "routes": [
+    {
+      "routeName": "OPO-MAD-DIRECT",
+      "type": "DIRECT",
+      "originIata": "OPO",
+      "destinationIata": "MAD",
+      "estimatedTimeHours": 1.25,
+      "distanceKm": 550.0,
+      "requiredRange": 800.0,
+      "requiredCapacity": 180
+    }
+  ],
+  "flights": [
+    {
+      "routeName": "OPO-MAD-DIRECT",
+      "aircraftRegistration": "CS-TMB",
+      "scheduledDeparture": "2026-11-01T14:00:00",
+      "scheduledArrival": "2026-11-01T15:15:00"
+    }
+  ]
+}

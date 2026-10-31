@@ -1,0 +1,22 @@
+{
+  "routes": [
+    {
+      "routeName": "OPO-LIS-DIRECT",
+      "type": "DIRECT",
+      "originIata": "OPO",
+      "destinationIata": "LIS",
+      "estimatedTimeHours": 1.0,
+      "distanceKm": 300.0,
+      "requiredRange": 500.0,
+      "requiredCapacity": 150
+    }
+  ],
+  "flights": [
+    {
+      "routeName": "OPO-LIS-DIRECT",
+      "aircraftRegistration": "CS-TMA",
+      "scheduledDeparture": "2026-11-01T10:00:00",
+      "scheduledArrival": "2026-11-01T11:00:00"
+    }
+  ]
+}
