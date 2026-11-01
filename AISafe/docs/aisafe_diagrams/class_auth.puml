@@ -1,0 +1,36 @@
+@startuml
+title Logical view - auth-service (Identity & Access)\ndomain classes
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName SansSerif
+hide empty members
+
+class Collaborator <<Entity>> {
+  - id : UUID
+  - version : Long
+  - username : String
+  - email : String
+  - passwordHash : String
+  - roles : Set<Role>
+  - enabled : boolean
+  + disable()
+  + roleNames()
+}
+
+enum Role {
+  ADMIN
+  ATCC
+  BACKOFFICE
+  MAINTENANCE_TECHNICIAN
+  MAINTENANCE_SUPERVISOR
+}
+Collaborator --> "*" Role : roles
+
+class LoginAttemptService <<in memory>> {
+  - attempts : Map<String, Attempts>
+  + secondsLocked()
+  + recordFailure()
+  + recordSuccess()
+}
+LoginAttemptService ..> Collaborator : username
+@enduml

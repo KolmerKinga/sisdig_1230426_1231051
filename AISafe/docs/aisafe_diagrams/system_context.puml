@@ -1,0 +1,27 @@
+@startuml
+title AISafe Flight Management System - System Context (C4 Level 1)
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultTextAlignment center
+left to right direction
+
+actor "Backoffice Operator" as BO
+actor "ATCC\n(Air Transport Company\nCollaborator)" as ATCC
+actor "Maintenance Technician" as TECH
+actor "Maintenance Supervisor" as SUP
+actor "Administrator" as ADM
+
+rectangle "AISafe Flight Management System\n(distributed: 5 services x 2 replicas)\n\nManages the aircraft fleet, airports,\nroutes and scheduled flights,\nmaintenance activities and\nuser authentication" as AISafe #E8EEF6
+
+BO --> AISafe : registers aircraft models,\nairports and their status\n[HTTPS/REST + JWT]
+ATCC --> AISafe : manages aircraft, routes\nand schedules flights\n[HTTPS/REST + JWT]
+TECH --> AISafe : creates and executes\nmaintenance records\n[HTTPS/REST + JWT]
+SUP --> AISafe : reviews maintenance reports,\ncosts and parts inventory\n[HTTPS/REST + JWT]
+ADM --> AISafe : full access\n[HTTPS/REST + JWT]
+
+note bottom of AISafe
+  No external systems: every user logs in through
+  POST /auth/login and receives a JWT (username, roles).
+  Clients in Assignment 1: Postman collections.
+end note
+@enduml

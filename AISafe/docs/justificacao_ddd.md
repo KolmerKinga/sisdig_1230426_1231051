@@ -106,8 +106,10 @@ Estas decisões complementam os Bounded Contexts e estão detalhadas nos diagram
 
 | Ficheiro | Vista |
 | --- | --- |
+| `aisafe_diagrams/system_context.puml` | Contexto do sistema (C4 nível 1) |
 | `aisafe_diagrams/aisafe_ddd_context_map.puml` | Mapa de contextos DDD |
-| `../../../../Downloads/AISafe 2/docs/aisafe_diagrams/arquitetura.puml` | Arquitetura de containers (C4 nível 2) |
+| `aisafe_diagrams/arquitetura.puml` | Arquitetura de containers (C4 nível 2) |
 | `aisafe_diagrams/aisafe_deployment_replication.puml` | Vista física: réplicas, portas, HTTPS |
-| `../../../../Downloads/AISafe 2/docs/aisafe_diagrams/aisafe_peer_get_forwarding_sequence.puml` | Cenário: forwarding de GET e agregação, incluindo falha de peer |
-| `../../../../Downloads/AISafe 2/docs/aisafe_diagrams/aisafe_create_scheduled_flight_sequence.puml` | Cenário: agendamento de voo entre serviços (US212) |
+| `aisafe_diagrams/aisafe_peer_get_forwarding_sequence.puml` | Cenário: forwarding de GET e agregação, incluindo falha de peer |
+| `aisafe_diagrams/aisafe_create_scheduled_flight_sequence.puml` | Cenário: agendamento de voo entre serviços (US212) |
+| `aisafe_diagrams/class_*.puml` | Logical View: diagrama de classes do domínio de cada serviço |
