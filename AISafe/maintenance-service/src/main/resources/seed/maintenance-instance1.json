@@ -1,0 +1,64 @@
+{
+  "templates": [
+    {
+      "name": "A-Check Inspection",
+      "operation": "INSPECTION",
+      "attribute": "AIRFRAME",
+      "expectedDuration": 8.0,
+      "templateChecklist": {
+        "Inspect fuselage and wings": true,
+        "Check landing gear": true,
+        "Test cabin lights": false
+      }
+    },
+    {
+      "name": "Engine Borescope Inspection",
+      "operation": "INSPECTION",
+      "attribute": "ENGINE",
+      "expectedDuration": 6.0,
+      "templateChecklist": {
+        "Borescope compressor stages": true,
+        "Check oil filter": true,
+        "Record findings": true
+      }
+    }
+  ],
+  "records": [
+    {
+      "templateName": "A-Check Inspection",
+      "aircraftRegistration": "CS-TMA",
+      "aircraftModel": "A320-200",
+      "description": "Routine A-Check",
+      "startDate": "2026-06-01",
+      "durationHours": 9.5,
+      "status": "COMPLETED",
+      "endDate": "2026-06-03",
+      "completionNotes": "No defects found",
+      "createdBy": "technician",
+      "completedBy": "technician",
+      "usedParts": [
+        {
+          "partSerialNumber": "BRK-PAD-A320",
+          "quantity": 4,
+          "price": 350.0
+        },
+        {
+          "partSerialNumber": "FLT-OIL-01",
+          "quantity": 6,
+          "price": 45.0
+        }
+      ]
+    },
+    {
+      "templateName": "Engine Borescope Inspection",
+      "aircraftRegistration": "CS-TMA",
+      "aircraftModel": "A320-200",
+      "description": "Planned borescope after bird strike report",
+      "startDate": "2026-11-10",
+      "durationHours": 6.0,
+      "status": "INLINE",
+      "createdBy": "technician",
+      "usedParts": []
+    }
+  ]
+}

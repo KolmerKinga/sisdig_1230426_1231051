@@ -1,0 +1,8 @@
+[
+  { "username": "admin",        "email": "admin@email.com",        "password": "admin123",        "roles": ["ADMIN"] },
+  { "username": "atcc",         "email": "atcc@email.com",         "password": "atcc123",         "roles": ["ATCC"] },
+  { "username": "backoffice",   "email": "backoffice@email.com",   "password": "backoffice123",   "roles": ["BACKOFFICE"] },
+  { "username": "technician",   "email": "technician@email.com",   "password": "technician123",   "roles": ["MAINTENANCE_TECHNICIAN"] },
+  { "username": "supervisor",   "email": "supervisor@email.com",   "password": "supervisor123",   "roles": ["MAINTENANCE_SUPERVISOR"] },
+  { "username": "lockout-demo", "email": "lockout-demo@email.com", "password": "lockout123",      "roles": ["ATCC"] }
+]

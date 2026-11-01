@@ -18,14 +18,14 @@ database "H2\naircraft2" as StoreB
 
 == 1. Single resource ==
 
-Client -> A : GET /api/hangar/aircraft/CS-TUA\nAuthorization: Bearer <JWT>
+Client -> A : GET /api/aircraft/CS-TUA\nAuthorization: Bearer <JWT>
 activate A
 A -> A : validate JWT + role (ATCC / BACKOFFICE / ADMIN)
 A -> StoreA : findById("CS-TUA")
 StoreA --> A : empty
 
 alt aircraft-2 answers
-  A -> B : GET /api/hangar/aircraft/CS-TUA\nAuthorization: Bearer <JWT>\nX-Service-Key: <key>\nX-Forwarded-By: aircraft-1
+  A -> B : GET /api/aircraft/CS-TUA\nAuthorization: Bearer <JWT>\nX-Service-Key: <key>\nX-Forwarded-By: aircraft-1
   activate B
   note right of B
     Request has X-Forwarded-By:
@@ -56,13 +56,13 @@ deactivate A
 
 == 2. Collection query (aggregation) ==
 
-Client -> A : GET /api/hangar/aircraft?status=AVAILABLE
+Client -> A : GET /api/aircraft?status=AVAILABLE
 activate A
 par
   A -> StoreA : findByStatus(AVAILABLE)
   StoreA --> A : local list
 else
-  A -> B : GET /api/hangar/aircraft?status=AVAILABLE\nX-Forwarded-By: aircraft-1, X-Service-Key
+  A -> B : GET /api/aircraft?status=AVAILABLE\nX-Forwarded-By: aircraft-1, X-Service-Key
   B -> StoreB : findByStatus(AVAILABLE)
   StoreB --> B : peer list
   B --> A : 200 OK + list

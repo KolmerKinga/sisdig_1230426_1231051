@@ -25,7 +25,7 @@ Route -> RouteDB : find Route by routeId
 note right of Route : if the route is not stored locally,\nit is fetched from route-2 (forwarding rule)
 Route -> Route : route must be ACTIVE;\nread requiredRange, requiredCapacity,\norigin and destination IATA codes
 
-Route -> Aircraft : GET /api/hangar/aircraft/{registrationNumber}\nJWT + X-Service-Key
+Route -> Aircraft : GET /api/aircraft/{registrationNumber}\nJWT + X-Service-Key
 Aircraft --> Route : 200 {status, modelName,\nmaximumRangeKm, seatingCapacity}
 
 Route -> Airport : GET /api/airports/{originIata}

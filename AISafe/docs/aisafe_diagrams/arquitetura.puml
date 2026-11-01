@@ -11,7 +11,7 @@ skinparam ArrowFontSize 11
 
 actor "Client\n(Postman / Frontend)\nBackoffice, ATCC,\nMaintenance staff" as Client
 
-package "Identity & Access (supporting)" as AuthPkg {
+package "Identity & Access (generic)" as AuthPkg {
   component "auth-service\nSpring Boot - HTTPS\n8051 / 8052\n\nPOST /auth/login\nissues JWT (username, roles)" as Auth
   database "H2 per replica\nCollaborators" as AuthDB
   Auth --> AuthDB : JPA

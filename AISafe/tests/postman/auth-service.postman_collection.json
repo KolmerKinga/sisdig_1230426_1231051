@@ -1,0 +1,840 @@
+{
+  "info": {
+    "_postman_id": "4d282943-c4a3-4ee5-8b82-9bf4fc116ac7",
+    "name": "AISafe - auth-service (SIDIS A1)",
+    "description": "auth-service (2 replicas: 8051, 8052).\n\n1. Generate the certificates and start both replicas.\n2. Postman > Settings > General: turn OFF 'SSL certificate verification' (self-signed certificate).\n3. Run folders 0-3 (folder 1 saves the tokens in the collection variables).\n4. Folder 4 blocks the user lockout-demo for 5 minutes: run it last.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "0. Health",
+      "item": [
+        {
+          "name": "auth-1 health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{auth1}}/actuator/health",
+              "host": [
+                "{{auth1}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "auth-2 health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{auth2}}/actuator/health",
+              "host": [
+                "{{auth2}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1. Login (saves the tokens)",
+      "item": [
+        {
+          "name": "Login admin (auth-1)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{auth1}}/auth/login",
+              "host": [
+                "{{auth1}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"token received\", () => { pm.expect(pm.response.json().token).to.be.a(\"string\"); });",
+                  "pm.test(\"token saved in token_admin\", () => { pm.collectionVariables.set(\"token_admin\", pm.response.json().token); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login atcc (auth-1)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{auth1}}/auth/login",
+              "host": [
+                "{{auth1}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"atcc\",\n  \"password\": \"atcc123\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"token received\", () => { pm.expect(pm.response.json().token).to.be.a(\"string\"); });",
+                  "pm.test(\"token saved in token_atcc\", () => { pm.collectionVariables.set(\"token_atcc\", pm.response.json().token); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login backoffice (auth-1)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{auth1}}/auth/login",
+              "host": [
+                "{{auth1}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"backoffice\",\n  \"password\": \"backoffice123\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"token received\", () => { pm.expect(pm.response.json().token).to.be.a(\"string\"); });",
+                  "pm.test(\"token saved in token_backoffice\", () => { pm.collectionVariables.set(\"token_backoffice\", pm.response.json().token); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login technician (auth-1)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{auth1}}/auth/login",
+              "host": [
+                "{{auth1}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"technician\",\n  \"password\": \"technician123\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"token received\", () => { pm.expect(pm.response.json().token).to.be.a(\"string\"); });",
+                  "pm.test(\"token saved in token_technician\", () => { pm.collectionVariables.set(\"token_technician\", pm.response.json().token); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login supervisor (auth-2: any replica can log in)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{auth2}}/auth/login",
+              "host": [
+                "{{auth2}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"supervisor\",\n  \"password\": \"supervisor123\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"token received\", () => { pm.expect(pm.response.json().token).to.be.a(\"string\"); });",
+                  "pm.test(\"token saved in token_supervisor\", () => { pm.collectionVariables.set(\"token_supervisor\", pm.response.json().token); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Token validation",
+      "item": [
+        {
+          "name": "GET /auth/me with the ATCC token (auth-1)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_atcc}}"
+              }
+            ],
+            "url": {
+              "raw": "{{auth1}}/auth/me",
+              "host": [
+                "{{auth1}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"username atcc\", () => { pm.expect(pm.response.json().username).to.eql(\"atcc\"); });",
+                  "pm.test(\"role ATCC\", () => { pm.expect(pm.response.json().roles).to.eql([\"ATCC\"]); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /auth/me on auth-2 with a token issued by auth-1",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_atcc}}"
+              }
+            ],
+            "url": {
+              "raw": "{{auth2}}/auth/me",
+              "host": [
+                "{{auth2}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            },
+            "description": "The token was issued by auth-1 and is validated by auth-2 with the shared key: no shared session."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"validated by auth-2\", () => { pm.expect(pm.response.json().validatedBy).to.eql(\"auth-2\"); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Errors and security",
+      "item": [
+        {
+          "name": "Wrong password -> 401",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{auth1}}/auth/login",
+              "host": [
+                "{{auth1}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"atcc\",\n  \"password\": \"wrong\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 401\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Unknown user -> 401 (same message)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{auth1}}/auth/login",
+              "host": [
+                "{{auth1}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"nobody\",\n  \"password\": \"x\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"same message as wrong password\", () => { pm.expect(pm.response.json().message).to.eql(\"Invalid username or password\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Missing password -> 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{auth1}}/auth/login",
+              "host": [
+                "{{auth1}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"atcc\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "/auth/me without token -> 401",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{auth1}}/auth/me",
+              "host": [
+                "{{auth1}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 401\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "/auth/me with a tampered token -> 401",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4Iiwicm9sZXMiOlsiQURNSU4iXX0.invalidsignature"
+              }
+            ],
+            "url": {
+              "raw": "{{auth1}}/auth/me",
+              "host": [
+                "{{auth1}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 401\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Fake internal call without service key -> 403",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_atcc}}"
+              },
+              {
+                "key": "X-Forwarded-By",
+                "value": "attacker"
+              }
+            ],
+            "url": {
+              "raw": "{{auth1}}/auth/me",
+              "host": [
+                "{{auth1}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 403\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Brute-force lockout (run last, user lockout-demo)",
+      "description": "5 wrong passwords block the username for 5 minutes on that replica (429 + Retry-After).",
+      "item": [
+        {
+          "name": "Wrong password #1 -> 401",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{auth1}}/auth/login",
+              "host": [
+                "{{auth1}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"lockout-demo\",\n  \"password\": \"wrong\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 401\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Wrong password #2 -> 401",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{auth1}}/auth/login",
+              "host": [
+                "{{auth1}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"lockout-demo\",\n  \"password\": \"wrong\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 401\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Wrong password #3 -> 401",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{auth1}}/auth/login",
+              "host": [
+                "{{auth1}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"lockout-demo\",\n  \"password\": \"wrong\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 401\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Wrong password #4 -> 401",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{auth1}}/auth/login",
+              "host": [
+                "{{auth1}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"lockout-demo\",\n  \"password\": \"wrong\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 401\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Wrong password #5 -> 401",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{auth1}}/auth/login",
+              "host": [
+                "{{auth1}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"lockout-demo\",\n  \"password\": \"wrong\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 401\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6th attempt, even with the right password -> 429",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{auth1}}/auth/login",
+              "host": [
+                "{{auth1}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"lockout-demo\",\n  \"password\": \"lockout123\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 429\", () => pm.response.to.have.status(429));",
+                  "pm.test(\"Retry-After header\", () => { pm.expect(Number(pm.response.headers.get(\"Retry-After\"))).to.be.above(0); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "auth1",
+      "value": "https://localhost:8051"
+    },
+    {
+      "key": "auth2",
+      "value": "https://localhost:8052"
+    },
+    {
+      "key": "token_admin",
+      "value": ""
+    },
+    {
+      "key": "token_atcc",
+      "value": ""
+    },
+    {
+      "key": "token_backoffice",
+      "value": ""
+    },
+    {
+      "key": "token_technician",
+      "value": ""
+    },
+    {
+      "key": "token_supervisor",
+      "value": ""
+    }
+  ]
+}
