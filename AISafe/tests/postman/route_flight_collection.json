@@ -1,0 +1,216 @@
+{
+  "info": {
+    "_postman_id": "7a3b21c4-18ef-412b-b892-9c0005a62c4d",
+    "name": "AISafe - route_flight-service (SIDIS A1)",
+    "description": "Distributed tests for route_flight-service: 2 replicas (8083, 8084).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "00. Login",
+      "item": [
+        {
+          "name": "Login atcc",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{auth1}}/auth/login",
+              "host": ["{{auth1}}"],
+              "path": ["auth", "login"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"atcc\",\n  \"password\": \"atcc123\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"token saved\", () => pm.collectionVariables.set(\"token_atcc\", pm.response.json().token));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login backoffice",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{auth1}}/auth/login",
+              "host": ["{{auth1}}"],
+              "path": ["auth", "login"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"backoffice\",\n  \"password\": \"backoffice123\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"token saved\", () => pm.collectionVariables.set(\"token_backoffice\", pm.response.json().token));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "0. Health",
+      "item": [
+        {
+          "name": "route-flight-1 health",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{routeflight1}}/actuator/health",
+              "host": ["{{routeflight1}}"],
+              "path": ["actuator", "health"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test(\"status 200\", () => pm.response.to.have.status(200));"]
+              }
+            }
+          ]
+        },
+        {
+          "name": "route-flight-2 health",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{routeflight2}}/actuator/health",
+              "host": ["{{routeflight2}}"],
+              "path": ["actuator", "health"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test(\"status 200\", () => pm.response.to.have.status(200));"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1. Queries and Aggregation",
+      "item": [
+        {
+          "name": "Get all flights (aggregated)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_atcc}}" }],
+            "url": {
+              "raw": "{{routeflight1}}/api/flights",
+              "host": ["{{routeflight1}}"],
+              "path": ["api", "flights"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"X-Partial-Result = false\", () => pm.expect(pm.response.headers.get(\"X-Partial-Result\")).to.eql(\"false\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Commands (Schedule Flight)",
+      "item": [
+        {
+          "name": "Schedule Flight",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token_backoffice}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{routeflight2}}/api/flights",
+              "host": ["{{routeflight2}}"],
+              "path": ["api", "flights"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"routeId\": \"route-123\",\n  \"aircraftRegistration\": \"CS-ABC\",\n  \"scheduledDeparture\": \"2026-11-02T10:00:00\",\n  \"scheduledArrival\": \"2026-11-02T12:00:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 201\", () => pm.expect(pm.response.code).to.be.oneOf([201, 200]));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Failure (Stop routeflight-2)",
+      "item": [
+        {
+          "name": "Get flights with partial result",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_atcc}}" }],
+            "url": {
+              "raw": "{{routeflight1}}/api/flights",
+              "host": ["{{routeflight1}}"],
+              "path": ["api", "flights"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"X-Partial-Result = true\", () => pm.expect(pm.response.headers.get(\"X-Partial-Result\")).to.eql(\"true\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "auth1", "value": "https://localhost:8051" },
+    { "key": "routeflight1", "value": "https://localhost:8083" },
+    { "key": "routeflight2", "value": "https://localhost:8084" },
+    { "key": "token_atcc", "value": "" },
+    { "key": "token_backoffice", "value": "" }
+  ]
+}

@@ -1,0 +1,239 @@
+{
+  "info": {
+    "_postman_id": "8c4f32d5-29ef-423c-c993-2d0005a62c5e",
+    "name": "AISafe - aircraft-service (SIDIS A1)",
+    "description": "Distributed tests for aircraft-service: 2 replicas (8081, 8082).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "00. Login",
+      "item": [
+        {
+          "name": "Login atcc",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{auth1}}/auth/login",
+              "host": ["{{auth1}}"],
+              "path": ["auth", "login"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"atcc\",\n  \"password\": \"atcc123\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"token saved\", () => pm.collectionVariables.set(\"token_atcc\", pm.response.json().token));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login backoffice",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{auth1}}/auth/login",
+              "host": ["{{auth1}}"],
+              "path": ["auth", "login"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"backoffice\",\n  \"password\": \"backoffice123\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"token saved\", () => pm.collectionVariables.set(\"token_backoffice\", pm.response.json().token));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "0. Health",
+      "item": [
+        {
+          "name": "aircraft-1 health",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{aircraft1}}/actuator/health",
+              "host": ["{{aircraft1}}"],
+              "path": ["actuator", "health"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test(\"status 200\", () => pm.response.to.have.status(200));"]
+              }
+            }
+          ]
+        },
+        {
+          "name": "aircraft-2 health",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{aircraft2}}/actuator/health",
+              "host": ["{{aircraft2}}"],
+              "path": ["actuator", "health"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test(\"status 200\", () => pm.response.to.have.status(200));"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1. Queries and Aggregation",
+      "item": [
+        {
+          "name": "Get aircraft by registration (local/forwarded)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_atcc}}" }],
+            "url": {
+              "raw": "{{aircraft1}}/api/aircrafts/CS-ABC",
+              "host": ["{{aircraft1}}"],
+              "path": ["api", "aircrafts", "CS-ABC"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search all aircrafts (aggregated)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_atcc}}" }],
+            "url": {
+              "raw": "{{aircraft2}}/api/aircrafts",
+              "host": ["{{aircraft2}}"],
+              "path": ["api", "aircrafts"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"X-Partial-Result = false\", () => pm.expect(pm.response.headers.get(\"X-Partial-Result\")).to.eql(\"false\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Commands (Register Aircraft)",
+      "item": [
+        {
+          "name": "Register Aircraft",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token_backoffice}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{aircraft2}}/api/aircrafts",
+              "host": ["{{aircraft2}}"],
+              "path": ["api", "aircrafts"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"registration\": \"CS-XYZ\",\n  \"model\": \"A320-200\",\n  \"airline\": \"TAP\",\n  \"status\": \"AVAILABLE\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 201\", () => pm.expect(pm.response.code).to.be.oneOf([201, 200]));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Failure (Stop aircraft-2)",
+      "item": [
+        {
+          "name": "Search aircrafts with partial result",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_atcc}}" }],
+            "url": {
+              "raw": "{{aircraft1}}/api/aircrafts",
+              "host": ["{{aircraft1}}"],
+              "path": ["api", "aircrafts"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"X-Partial-Result = true\", () => pm.expect(pm.response.headers.get(\"X-Partial-Result\")).to.eql(\"true\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "auth1", "value": "https://localhost:8051" },
+    { "key": "aircraft1", "value": "https://localhost:8081" },
+    { "key": "aircraft2", "value": "https://localhost:8082" },
+    { "key": "token_atcc", "value": "" },
+    { "key": "token_backoffice", "value": "" }
+  ]
+}
