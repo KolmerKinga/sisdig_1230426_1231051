@@ -1,0 +1,1760 @@
+{
+  "info": {
+    "_postman_id": "4b58bce6-6565-4f0c-aa9f-0a38799bdb0a",
+    "name": "AISafe - maintenance-service (SIDIS A1)",
+    "description": "maintenance-service (2 replicas: 8061, 8062). Depends on auth-service (login) and aircraft-service (8081/8082).\n\n1. Start auth-service, aircraft-service and both maintenance replicas.\n2. Postman > Settings > General: turn OFF 'SSL certificate verification'.\n3. Run folders 00-5 in order (00 saves the tokens; 1 saves the template ids; 2 saves the record id).\n4. Stop maintenance-2 and run folder 6. Stop aircraft-service and run folder 7.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "00. Login (auth-service must be running)",
+      "item": [
+        {
+          "name": "Login technician",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{auth1}}/auth/login",
+              "host": [
+                "{{auth1}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"technician\",\n  \"password\": \"technician123\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"token received\", () => { pm.expect(pm.response.json().token).to.be.a(\"string\"); });",
+                  "pm.test(\"token saved in token_technician\", () => { pm.collectionVariables.set(\"token_technician\", pm.response.json().token); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login supervisor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{auth1}}/auth/login",
+              "host": [
+                "{{auth1}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"supervisor\",\n  \"password\": \"supervisor123\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"token received\", () => { pm.expect(pm.response.json().token).to.be.a(\"string\"); });",
+                  "pm.test(\"token saved in token_supervisor\", () => { pm.collectionVariables.set(\"token_supervisor\", pm.response.json().token); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login atcc",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{auth1}}/auth/login",
+              "host": [
+                "{{auth1}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"atcc\",\n  \"password\": \"atcc123\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"token received\", () => { pm.expect(pm.response.json().token).to.be.a(\"string\"); });",
+                  "pm.test(\"token saved in token_atcc\", () => { pm.collectionVariables.set(\"token_atcc\", pm.response.json().token); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{auth1}}/auth/login",
+              "host": [
+                "{{auth1}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"token received\", () => { pm.expect(pm.response.json().token).to.be.a(\"string\"); });",
+                  "pm.test(\"token saved in token_admin\", () => { pm.collectionVariables.set(\"token_admin\", pm.response.json().token); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "0. Health",
+      "item": [
+        {
+          "name": "maintenance-1 health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{maintenance1}}/actuator/health",
+              "host": [
+                "{{maintenance1}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "maintenance-2 health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{maintenance2}}/actuator/health",
+              "host": [
+                "{{maintenance2}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1. Templates (partitioning + aggregation)",
+      "item": [
+        {
+          "name": "List templates on maintenance-1 (both replicas aggregated)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_technician}}"
+              }
+            ],
+            "url": {
+              "raw": "{{maintenance1}}/api/maintenance/templates",
+              "host": [
+                "{{maintenance1}}"
+              ],
+              "path": [
+                "api",
+                "maintenance",
+                "templates"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"X-Partial-Result = false\", () => pm.expect(pm.response.headers.get(\"X-Partial-Result\")).to.eql(\"false\"));",
+                  "pm.test(\"templates of both replicas\", () => { const n = pm.response.json().map(t => t.name); pm.expect(n).to.include.members([\"A-Check Inspection\",\"C-Check Overhaul\"]); });",
+                  "pm.test(\"save template ids\", () => { const ts = pm.response.json(); pm.collectionVariables.set(\"template_ccheck\", ts.find(t => t.name === \"C-Check Overhaul\").id); pm.collectionVariables.set(\"template_acheck\", ts.find(t => t.name === \"A-Check Inspection\").id); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET C-Check template on maintenance-1 (stored on maintenance-2 -> forwarded)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_technician}}"
+              }
+            ],
+            "url": {
+              "raw": "{{maintenance1}}/api/maintenance/templates/{{template_ccheck}}",
+              "host": [
+                "{{maintenance1}}"
+              ],
+              "path": [
+                "api",
+                "maintenance",
+                "templates",
+                "{{template_ccheck}}"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"X-Served-By = maintenance-1\", () => pm.expect(pm.response.headers.get(\"X-Served-By\")).to.eql(\"maintenance-1\"));",
+                  "pm.test(\"X-Data-Source contains 8062\", () => pm.expect(pm.response.headers.get(\"X-Data-Source\") || \"\").to.include(\"8062\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create template on maintenance-2",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_technician}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{maintenance2}}/api/maintenance/templates",
+              "host": [
+                "{{maintenance2}}"
+              ],
+              "path": [
+                "api",
+                "maintenance",
+                "templates"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Cabin Interior Refit\",\n  \"expectedDuration\": 16.0,\n  \"operation\": \"MODIFICATION\",\n  \"attribute\": \"INTERIOR\",\n  \"templateChecklist\": {\n    \"Remove old seats\": true,\n    \"Install new seats\": true,\n    \"Clean cabin\": false\n  }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"X-Data-Source = local\", () => pm.expect(pm.response.headers.get(\"X-Data-Source\")).to.eql(\"local\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Records (needs aircraft-service on 8081/8082)",
+      "item": [
+        {
+          "name": "Create record on maintenance-1 for CS-TMA with the C-Check template of maintenance-2",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_technician}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{maintenance1}}/api/maintenance/records",
+              "host": [
+                "{{maintenance1}}"
+              ],
+              "path": [
+                "api",
+                "maintenance",
+                "records"
+              ]
+            },
+            "description": "Needs aircraft-service: the aircraft must exist. 503 if aircraft-service is down, 404 if the aircraft does not exist.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"registrationNumber\": \"CS-TMA\",\n  \"templateId\": \"{{template_ccheck}}\",\n  \"description\": \"C-Check after 6000 cycles\",\n  \"startDate\": \"2026-11-02\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"X-Data-Source = local\", () => pm.expect(pm.response.headers.get(\"X-Data-Source\")).to.eql(\"local\"));",
+                  "pm.test(\"template copied from the other replica\", () => { pm.expect(pm.response.json().templateName).to.eql(\"C-Check Overhaul\"); });",
+                  "pm.test(\"model copied from aircraft-service\", () => { pm.expect(pm.response.json().aircraftModel).to.be.a(\"string\"); });",
+                  "pm.test(\"status INLINE\", () => { pm.expect(pm.response.json().status).to.eql(\"INLINE\"); });",
+                  "pm.test(\"save record id\", () => { pm.collectionVariables.set(\"record_id\", pm.response.json().id); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET the new record on maintenance-2 (forwarded to maintenance-1)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_technician}}"
+              }
+            ],
+            "url": {
+              "raw": "{{maintenance2}}/api/maintenance/records/{{record_id}}",
+              "host": [
+                "{{maintenance2}}"
+              ],
+              "path": [
+                "api",
+                "maintenance",
+                "records",
+                "{{record_id}}"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"X-Served-By = maintenance-2\", () => pm.expect(pm.response.headers.get(\"X-Served-By\")).to.eql(\"maintenance-2\"));",
+                  "pm.test(\"X-Data-Source contains 8061\", () => pm.expect(pm.response.headers.get(\"X-Data-Source\") || \"\").to.include(\"8061\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search records of CS-TMB on maintenance-1 (data stored on maintenance-2)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_technician}}"
+              }
+            ],
+            "url": {
+              "raw": "{{maintenance1}}/api/maintenance/records?aircraft=CS-TMB",
+              "host": [
+                "{{maintenance1}}"
+              ],
+              "path": [
+                "api",
+                "maintenance",
+                "records"
+              ],
+              "query": [
+                {
+                  "key": "aircraft",
+                  "value": "CS-TMB"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"only CS-TMB\", () => { pm.response.json().forEach(r => pm.expect(r.aircraftRegistration).to.eql(\"CS-TMB\")); });",
+                  "pm.test(\"found records\", () => { pm.expect(pm.response.json().length).to.be.at.least(2); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search all records (aggregated, paginated)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_supervisor}}"
+              }
+            ],
+            "url": {
+              "raw": "{{maintenance2}}/api/maintenance/records?page=0&size=50",
+              "host": [
+                "{{maintenance2}}"
+              ],
+              "path": [
+                "api",
+                "maintenance",
+                "records"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "50"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"X-Total-Count >= 5\", () => { pm.expect(Number(pm.response.headers.get(\"X-Total-Count\"))).to.be.at.least(5); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search by component and date range",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_supervisor}}"
+              }
+            ],
+            "url": {
+              "raw": "{{maintenance1}}/api/maintenance/records?attribute=AIRFRAME&initialDate=2025-01-01&finalDate=2026-12-31",
+              "host": [
+                "{{maintenance1}}"
+              ],
+              "path": [
+                "api",
+                "maintenance",
+                "records"
+              ],
+              "query": [
+                {
+                  "key": "attribute",
+                  "value": "AIRFRAME"
+                },
+                {
+                  "key": "initialDate",
+                  "value": "2025-01-01"
+                },
+                {
+                  "key": "finalDate",
+                  "value": "2026-12-31"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"only AIRFRAME\", () => { pm.response.json().forEach(r => pm.expect(r.attribute).to.eql(\"AIRFRAME\")); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Workflow (commands forwarded to the owner replica)",
+      "item": [
+        {
+          "name": "Start the record via maintenance-2 (PATCH forwarded) -> aircraft goes to MAINTENANCE",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_technician}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{maintenance2}}/api/maintenance/records/{{record_id}}/status",
+              "host": [
+                "{{maintenance2}}"
+              ],
+              "path": [
+                "api",
+                "maintenance",
+                "records",
+                "{{record_id}}",
+                "status"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ONGOING\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"X-Data-Source contains 8061\", () => pm.expect(pm.response.headers.get(\"X-Data-Source\") || \"\").to.include(\"8061\"));",
+                  "pm.test(\"status ONGOING\", () => { pm.expect(pm.response.json().status).to.eql(\"ONGOING\"); });",
+                  "pm.test(\"aircraft sync reported\", () => { pm.expect(pm.response.json().aircraftSync).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Is CS-TMA under maintenance? (contract for route-flight-service, ATCC token)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_atcc}}"
+              }
+            ],
+            "url": {
+              "raw": "{{maintenance2}}/api/maintenance/aircraft/CS-TMA/ongoing",
+              "host": [
+                "{{maintenance2}}"
+              ],
+              "path": [
+                "api",
+                "maintenance",
+                "aircraft",
+                "CS-TMA",
+                "ongoing"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"under maintenance\", () => { pm.expect(pm.response.json().underMaintenance).to.eql(true); });",
+                  "pm.test(\"answer complete\", () => { pm.expect(pm.response.json().complete).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Add a used part (forwarded)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_technician}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{maintenance2}}/api/maintenance/records/{{record_id}}/parts",
+              "host": [
+                "{{maintenance2}}"
+              ],
+              "path": [
+                "api",
+                "maintenance",
+                "records",
+                "{{record_id}}",
+                "parts"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"partSerialNumber\": \"FLT-OIL-01\",\n  \"quantity\": 2,\n  \"price\": 45.0\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"part added\", () => { pm.expect(pm.response.json().usedParts.length).to.be.at.least(1); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Complete with a required task missing -> 409",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_technician}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{maintenance1}}/api/maintenance/records/{{record_id}}/complete",
+              "host": [
+                "{{maintenance1}}"
+              ],
+              "path": [
+                "api",
+                "maintenance",
+                "records",
+                "{{record_id}}",
+                "complete"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"completionNotes\": \"incomplete\",\n  \"tasksDone\": {\n    \"Structural inspection\": true\n  },\n  \"endDate\": \"2026-11-20\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 409\", () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Complete with end date before start -> 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_technician}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{maintenance1}}/api/maintenance/records/{{record_id}}/complete",
+              "host": [
+                "{{maintenance1}}"
+              ],
+              "path": [
+                "api",
+                "maintenance",
+                "records",
+                "{{record_id}}",
+                "complete"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"completionNotes\": \"x\",\n  \"tasksDone\": {\n    \"Structural inspection\": true,\n    \"Corrosion treatment\": true,\n    \"Replace cabin seals\": true,\n    \"Repaint markings\": false\n  },\n  \"endDate\": \"2026-10-01\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Complete the record -> aircraft back to AVAILABLE",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_supervisor}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{maintenance1}}/api/maintenance/records/{{record_id}}/complete",
+              "host": [
+                "{{maintenance1}}"
+              ],
+              "path": [
+                "api",
+                "maintenance",
+                "records",
+                "{{record_id}}",
+                "complete"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"completionNotes\": \"All structural items OK\",\n  \"tasksDone\": {\n    \"Structural inspection\": true,\n    \"Corrosion treatment\": true,\n    \"Replace cabin seals\": true,\n    \"Repaint markings\": false\n  },\n  \"endDate\": \"2026-11-20\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"status COMPLETED\", () => { pm.expect(pm.response.json().status).to.eql(\"COMPLETED\"); });",
+                  "pm.test(\"completed by supervisor\", () => { pm.expect(pm.response.json().completedBy).to.eql(\"supervisor\"); });",
+                  "pm.test(\"aircraft sync reported\", () => { pm.expect(pm.response.json().aircraftSync).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Complete again -> 409",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_supervisor}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{maintenance1}}/api/maintenance/records/{{record_id}}/complete",
+              "host": [
+                "{{maintenance1}}"
+              ],
+              "path": [
+                "api",
+                "maintenance",
+                "records",
+                "{{record_id}}",
+                "complete"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"completionNotes\": \"again\",\n  \"tasksDone\": {\n    \"Structural inspection\": true,\n    \"Corrosion treatment\": true,\n    \"Replace cabin seals\": true,\n    \"Repaint markings\": false\n  },\n  \"endDate\": \"2026-11-21\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 409\", () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Change the component of the record (US217, forwarded)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_technician}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{maintenance2}}/api/maintenance/records/{{record_id}}",
+              "host": [
+                "{{maintenance2}}"
+              ],
+              "path": [
+                "api",
+                "maintenance",
+                "records",
+                "{{record_id}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"attribute\": \"EXTERIOR\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"attribute changed\", () => { pm.expect(pm.response.json().attribute).to.eql(\"EXTERIOR\"); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Reports (computed with the data of both replicas)",
+      "item": [
+        {
+          "name": "US219 ongoing activities",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_supervisor}}"
+              }
+            ],
+            "url": {
+              "raw": "{{maintenance1}}/api/maintenance/ongoing",
+              "host": [
+                "{{maintenance1}}"
+              ],
+              "path": [
+                "api",
+                "maintenance",
+                "ongoing"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"X-Partial-Result = false\", () => pm.expect(pm.response.headers.get(\"X-Partial-Result\")).to.eql(\"false\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "US221 turnaround per model",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_supervisor}}"
+              }
+            ],
+            "url": {
+              "raw": "{{maintenance1}}/api/maintenance/turnaround-average",
+              "host": [
+                "{{maintenance1}}"
+              ],
+              "path": [
+                "api",
+                "maintenance",
+                "turnaround-average"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"both models\", () => { const m = pm.response.json().map(t => t.aircraftModel); pm.expect(m).to.include.members([\"A320-200\",\"B737-800\"]); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "US220 costs per model",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_atcc}}"
+              }
+            ],
+            "url": {
+              "raw": "{{maintenance2}}/api/maintenance/reports/costs?groupBy=model",
+              "host": [
+                "{{maintenance2}}"
+              ],
+              "path": [
+                "api",
+                "maintenance",
+                "reports",
+                "costs"
+              ],
+              "query": [
+                {
+                  "key": "groupBy",
+                  "value": "model"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"both models\", () => { const g = pm.response.json().map(c => c.group); pm.expect(g).to.include.members([\"A320-200\",\"B737-800\"]); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "US117 maintenance hours per aircraft",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_atcc}}"
+              }
+            ],
+            "url": {
+              "raw": "{{maintenance1}}/api/maintenance/reports/hours",
+              "host": [
+                "{{maintenance1}}"
+              ],
+              "path": [
+                "api",
+                "maintenance",
+                "reports",
+                "hours"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"CS-TMA and CS-TMB\", () => { const a = pm.response.json().map(h => h.aircraftRegistration); pm.expect(a).to.include.members([\"CS-TMA\",\"CS-TMB\"]); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "US222 alerts (needs aircraft-service)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_atcc}}"
+              }
+            ],
+            "url": {
+              "raw": "{{maintenance1}}/api/maintenance/alerts?calendarDaysThreshold=180&flightHoursThreshold=500",
+              "host": [
+                "{{maintenance1}}"
+              ],
+              "path": [
+                "api",
+                "maintenance",
+                "alerts"
+              ],
+              "query": [
+                {
+                  "key": "calendarDaysThreshold",
+                  "value": "180"
+                },
+                {
+                  "key": "flightHoursThreshold",
+                  "value": "500"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "US226 parts inventory (FLT-OIL-01 used on both replicas)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_supervisor}}"
+              }
+            ],
+            "url": {
+              "raw": "{{maintenance2}}/api/maintenance/parts/inventory",
+              "host": [
+                "{{maintenance2}}"
+              ],
+              "path": [
+                "api",
+                "maintenance",
+                "parts",
+                "inventory"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"FLT-OIL-01 aggregated (>= 11)\", () => { const p = pm.response.json().find(x => x.partSerialNumber === \"FLT-OIL-01\"); pm.expect(p.totalQuantityUsed).to.be.at.least(11); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "US226 low stock (threshold 10: only reached with both replicas)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_supervisor}}"
+              }
+            ],
+            "url": {
+              "raw": "{{maintenance1}}/api/maintenance/parts/low-stock?threshold=10",
+              "host": [
+                "{{maintenance1}}"
+              ],
+              "path": [
+                "api",
+                "maintenance",
+                "parts",
+                "low-stock"
+              ],
+              "query": [
+                {
+                  "key": "threshold",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"FLT-OIL-01 alert\", () => { pm.expect(pm.response.json().map(a => a.partSerialNumber)).to.include(\"FLT-OIL-01\"); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Security and validation",
+      "item": [
+        {
+          "name": "No token -> 401",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{maintenance1}}/api/maintenance/records",
+              "host": [
+                "{{maintenance1}}"
+              ],
+              "path": [
+                "api",
+                "maintenance",
+                "records"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 401\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ATCC cannot create templates -> 403",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_atcc}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{maintenance1}}/api/maintenance/templates",
+              "host": [
+                "{{maintenance1}}"
+              ],
+              "path": [
+                "api",
+                "maintenance",
+                "templates"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"X\",\n  \"expectedDuration\": 1.0,\n  \"operation\": \"INSPECTION\",\n  \"attribute\": \"ENGINE\",\n  \"templateChecklist\": {\n    \"a\": true\n  }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 403\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Technician cannot see turnaround report -> 403",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_technician}}"
+              }
+            ],
+            "url": {
+              "raw": "{{maintenance1}}/api/maintenance/turnaround-average",
+              "host": [
+                "{{maintenance1}}"
+              ],
+              "path": [
+                "api",
+                "maintenance",
+                "turnaround-average"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 403\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Internal endpoint called by a client (no service key) -> 403",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{maintenance1}}/api/maintenance/internal/records",
+              "host": [
+                "{{maintenance1}}"
+              ],
+              "path": [
+                "api",
+                "maintenance",
+                "internal",
+                "records"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 403\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Fake forwarded call without service key -> 403",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              },
+              {
+                "key": "X-Forwarded-By",
+                "value": "attacker"
+              }
+            ],
+            "url": {
+              "raw": "{{maintenance1}}/api/maintenance/records",
+              "host": [
+                "{{maintenance1}}"
+              ],
+              "path": [
+                "api",
+                "maintenance",
+                "records"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 403\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Invalid record id -> 400",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_technician}}"
+              }
+            ],
+            "url": {
+              "raw": "{{maintenance1}}/api/maintenance/records/not-a-uuid",
+              "host": [
+                "{{maintenance1}}"
+              ],
+              "path": [
+                "api",
+                "maintenance",
+                "records",
+                "not-a-uuid"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "COMPLETED via PATCH /status -> 400 (use /complete)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_technician}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{maintenance1}}/api/maintenance/records/{{record_id}}/status",
+              "host": [
+                "{{maintenance1}}"
+              ],
+              "path": [
+                "api",
+                "maintenance",
+                "records",
+                "{{record_id}}",
+                "status"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"COMPLETED\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Template without checklist -> 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_technician}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{maintenance1}}/api/maintenance/templates",
+              "host": [
+                "{{maintenance1}}"
+              ],
+              "path": [
+                "api",
+                "maintenance",
+                "templates"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Empty\",\n  \"expectedDuration\": 1.0,\n  \"operation\": \"INSPECTION\",\n  \"attribute\": \"ENGINE\",\n  \"templateChecklist\": {}\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6. Failure (STOP maintenance-2 before running)",
+      "description": "Stop the maintenance-2 process (instance2). maintenance-1 must keep answering with its own data.",
+      "item": [
+        {
+          "name": "Template stored on maintenance-2 -> 404 partial",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_technician}}"
+              }
+            ],
+            "url": {
+              "raw": "{{maintenance1}}/api/maintenance/templates/{{template_ccheck}}",
+              "host": [
+                "{{maintenance1}}"
+              ],
+              "path": [
+                "api",
+                "maintenance",
+                "templates",
+                "{{template_ccheck}}"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"X-Partial-Result = true\", () => pm.expect(pm.response.headers.get(\"X-Partial-Result\")).to.eql(\"true\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Records still answered (local data), partial",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_supervisor}}"
+              }
+            ],
+            "url": {
+              "raw": "{{maintenance1}}/api/maintenance/records",
+              "host": [
+                "{{maintenance1}}"
+              ],
+              "path": [
+                "api",
+                "maintenance",
+                "records"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"X-Partial-Result = true\", () => pm.expect(pm.response.headers.get(\"X-Partial-Result\")).to.eql(\"true\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Is CS-TMB under maintenance? -> complete=false",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_atcc}}"
+              }
+            ],
+            "url": {
+              "raw": "{{maintenance1}}/api/maintenance/aircraft/CS-TMB/ongoing",
+              "host": [
+                "{{maintenance1}}"
+              ],
+              "path": [
+                "api",
+                "maintenance",
+                "aircraft",
+                "CS-TMB",
+                "ongoing"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"answer incomplete\", () => { pm.expect(pm.response.json().complete).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "7. aircraft-service down (STOP aircraft-service before running)",
+      "item": [
+        {
+          "name": "Create record while aircraft-service is down -> 503",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_technician}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{maintenance1}}/api/maintenance/records",
+              "host": [
+                "{{maintenance1}}"
+              ],
+              "path": [
+                "api",
+                "maintenance",
+                "records"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"registrationNumber\": \"CS-TMA\",\n  \"templateId\": \"{{template_acheck}}\",\n  \"description\": \"test\",\n  \"startDate\": \"2026-11-05\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 503\", () => pm.response.to.have.status(503));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "auth1",
+      "value": "https://localhost:8051"
+    },
+    {
+      "key": "maintenance1",
+      "value": "https://localhost:8061"
+    },
+    {
+      "key": "maintenance2",
+      "value": "https://localhost:8062"
+    },
+    {
+      "key": "token_technician",
+      "value": ""
+    },
+    {
+      "key": "token_supervisor",
+      "value": ""
+    },
+    {
+      "key": "token_atcc",
+      "value": ""
+    },
+    {
+      "key": "token_admin",
+      "value": ""
+    },
+    {
+      "key": "template_ccheck",
+      "value": ""
+    },
+    {
+      "key": "template_acheck",
+      "value": ""
+    },
+    {
+      "key": "record_id",
+      "value": ""
+    }
+  ]
+}

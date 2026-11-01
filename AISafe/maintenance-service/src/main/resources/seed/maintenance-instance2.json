@@ -1,0 +1,64 @@
+{
+  "templates": [
+    {
+      "name": "C-Check Overhaul",
+      "operation": "OVERHAUL",
+      "attribute": "AIRFRAME",
+      "expectedDuration": 120.0,
+      "templateChecklist": {
+        "Structural inspection": true,
+        "Corrosion treatment": true,
+        "Replace cabin seals": true,
+        "Repaint markings": false
+      }
+    },
+    {
+      "name": "Avionics Software Update",
+      "operation": "MODIFICATION",
+      "attribute": "AVIONICS",
+      "expectedDuration": 4.0,
+      "templateChecklist": {
+        "Load new software": true,
+        "Run built-in tests": true
+      }
+    }
+  ],
+  "records": [
+    {
+      "templateName": "C-Check Overhaul",
+      "aircraftRegistration": "CS-TMB",
+      "aircraftModel": "B737-800",
+      "description": "Heavy maintenance C-Check",
+      "startDate": "2025-12-01",
+      "durationHours": 130.0,
+      "status": "COMPLETED",
+      "endDate": "2025-12-20",
+      "completionNotes": "Seals replaced, corrosion treated",
+      "createdBy": "technician",
+      "completedBy": "supervisor",
+      "usedParts": [
+        {
+          "partSerialNumber": "FLT-OIL-01",
+          "quantity": 5,
+          "price": 45.0
+        },
+        {
+          "partSerialNumber": "SEAL-KIT-737",
+          "quantity": 2,
+          "price": 1200.0
+        }
+      ]
+    },
+    {
+      "templateName": "Avionics Software Update",
+      "aircraftRegistration": "CS-TMB",
+      "aircraftModel": "B737-800",
+      "description": "FMS software v12 update",
+      "startDate": "2026-11-15",
+      "durationHours": 4.0,
+      "status": "INLINE",
+      "createdBy": "technician",
+      "usedParts": []
+    }
+  ]
+}

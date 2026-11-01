@@ -2,10 +2,95 @@
   "info": {
     "_postman_id": "2f97746b-bed4-418b-b55b-1c0005a62c3c",
     "name": "AISafe - airport-service (SIDIS A1)",
-    "description": "Distributed tests for airport-service: 2 replicas (8091, 8092).\n\n1. Generate certificates (AISafe/scripts/gen-certs) and start both replicas.\n2. Postman > Settings > General: turn OFF 'SSL certificate verification' (self-signed certificate).\n3. Fill the token variables with: python AISafe/scripts/dev-token.py --roles ATCC (and BACKOFFICE) - or with tokens from auth-service.\n4. Run folders 0-4 with both replicas up; stop airport-2 and run folder 5.",
+    "description": "Distributed tests for airport-service: 2 replicas (8091, 8092).\n\n1. Generate the certificates and start auth-service and both airport replicas.\n2. Postman > Settings > General: turn OFF 'SSL certificate verification' (self-signed certificate).\n3. Run folders 00-4 with both replicas up (folder 00 logs in and saves the tokens automatically).\n4. Stop airport-2 and run folder 5.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
+    {
+      "name": "00. Login (auth-service must be running)",
+      "item": [
+        {
+          "name": "Login atcc",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{auth1}}/auth/login",
+              "host": [
+                "{{auth1}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"atcc\",\n  \"password\": \"atcc123\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"token received\", () => { pm.expect(pm.response.json().token).to.be.a(\"string\"); });",
+                  "pm.test(\"token saved in token_atcc\", () => { pm.collectionVariables.set(\"token_atcc\", pm.response.json().token); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login backoffice",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{auth1}}/auth/login",
+              "host": [
+                "{{auth1}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"backoffice\",\n  \"password\": \"backoffice123\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"token received\", () => { pm.expect(pm.response.json().token).to.be.a(\"string\"); });",
+                  "pm.test(\"token saved in token_backoffice\", () => { pm.collectionVariables.set(\"token_backoffice\", pm.response.json().token); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
     {
       "name": "0. Health",
       "item": [
@@ -1030,6 +1115,10 @@
   ],
   "variable": [
     {
+      "key": "auth1",
+      "value": "https://localhost:8051"
+    },
+    {
       "key": "airport1",
       "value": "https://localhost:8091"
     },
@@ -1039,11 +1128,11 @@
     },
     {
       "key": "token_atcc",
-      "value": "PASTE_ATCC_TOKEN"
+      "value": ""
     },
     {
       "key": "token_backoffice",
-      "value": "PASTE_BACKOFFICE_TOKEN"
+      "value": ""
     }
   ]
 }

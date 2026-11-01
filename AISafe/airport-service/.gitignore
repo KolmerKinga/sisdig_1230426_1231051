@@ -1,7 +1,0 @@
-target/
-logs/
-*.log
-*.p12
-*.jks
-.idea/
-*.iml

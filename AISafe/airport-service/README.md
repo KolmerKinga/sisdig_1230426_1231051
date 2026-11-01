@@ -19,12 +19,13 @@ Pré-requisitos: JDK 17 e Maven.
    mvn spring-boot:run -Dspring-boot.run.profiles=instance2   # https://localhost:8092
    ```
    Em alternativa: `mvn package` e depois `java -jar target/airport-service.jar --spring.profiles.active=instance1`.
-3. **Obter um token.** Enquanto o `auth-service` não existir, use o token de desenvolvimento:
+3. **Obter um token.** Os tokens são emitidos pelo `auth-service` (que tem de estar a correr):
    ```bash
-   python AISafe/scripts/dev-token.py --user ana --roles BACKOFFICE
-   python AISafe/scripts/dev-token.py --user rui --roles ATCC
+   curl -k -X POST https://localhost:8051/auth/login -H "Content-Type: application/json" \
+        -d '{"username":"atcc","password":"atcc123"}'
    ```
-4. **Testar** com a coleção `AISafe/tests/postman/airport-service.postman_collection.json`. No Postman, desligar *SSL certificate verification*, porque o certificado é self-signed.
+   Na coleção Postman isto é feito automaticamente pela pasta **00. Login**.
+4. **Testar** com a coleção `AISafe/tests/postman/airport-service.postman_collection.json`. No Postman, desligar *SSL certificate verification*, porque o certificado é self-signed, e correr a pasta **00. Login** primeiro: ela guarda os tokens nas variáveis da coleção.
 
 Verificação rápida: `curl -k https://localhost:8091/actuator/health`.
 
@@ -87,7 +88,7 @@ Cabeçalhos de resposta úteis na demonstração:
 
 - **HTTPS** (TLS 1.3) em todas as portas, com o bundle SSL `aisafe`. O mesmo certificado é usado pelo cliente HTTP que fala com os peers.
 - **JWT:**
-  - emitido pelo `auth-service` e validado localmente com a chave partilhada (`AISAFE_JWT_SECRET`);
+  - emitido pelo `auth-service` (`POST /auth/login`) e validado localmente com a chave partilhada (`AISAFE_JWT_SECRET`);
   - não há chamadas ao `auth-service` em cada pedido;
   - claims: `sub`, `username`, `roles`.
 - **Autenticação entre serviços:** um pedido interno (com `X-Forwarded-By` ou `X-Service-Key`) tem de trazer a chave correta (`AISAFE_SERVICE_KEY`), caso contrário recebe 403. O JWT do utilizador é sempre propagado, por isso o RBAC é aplicado em todas as réplicas.

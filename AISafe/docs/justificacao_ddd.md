@@ -19,7 +19,7 @@ O enunciado de SIDIS propõe três serviços (Aircraft & Maintenance, Airports &
 | **Aircraft Management** | `aircraft-service` | core | Modelos, aeronaves, configuração, componentes, certificações e estado operacional da frota. | `AircraftModel`, `Aircraft`, `AircraftSpecs`, `SeatingPack`, `InstalledComponent`, `AircraftCertification`, `AircraftAvailability` |
 | **Airport Management** | `airport-service` | supporting | Aeroportos, pistas, instalações, contactos, estado operacional e certificações do aeroporto. | `Airport`, `Runway`, `Facilities`, `AirportStatus`, `Certification` |
 | **Route / Flight Operations** | `route-flight-service` | core | Rotas, histórico de rotas e voos agendados; coordena as verificações entre domínios no agendamento. | `Route`, `RouteHistory`, `RouteRequirements`, `Flight` |
-| **Maintenance Management** | `maintenance-service` | core | Templates de manutenção, registos de intervenções, progresso, peças e alertas. | `MaintenanceTemplate`, `MaintenanceRecord`, `UsedPart`, `DoneList` |
+| **Maintenance Management** | `maintenance-service` | core | Templates de manutenção, registos de intervenções, progresso, peças e alertas. | `MaintenanceTemplate`, `MaintenanceRecord`, `ChecklistItem`, `UsedPart` |
 | **Identity & Access** | `auth-service` | generic | Colaboradores, papéis e emissão de tokens JWT. | `Collaborator`, `Role` |
 
 `AircraftAvailability` é um enum, não uma entidade autónoma. `AircraftCertification` (certificação da aeronave) e `Certification` (certificação do aeroporto) são classes distintas e pertencem a contextos diferentes. No código PSOFT, o voo agendado é a classe `Flight`.
@@ -52,9 +52,10 @@ Assim evita-se acoplamento circular e chamadas em cadeia entre serviços.
 
 | Chamada | Estado |
 | --- | --- |
-| `GET /api/hangar/aircraft/{registrationNumber}` | Existe no PSOFT; a resposta passa a incluir `maximumRangeKm` e `seatingCapacity`, necessários para validar alcance e capacidade. |
-| `PATCH /api/hangar/aircraft/{registrationNumber}` (disponibilidade) | Existe no PSOFT (US105). |
-| `PATCH /api/hangar/aircraft/{registrationNumber}/flight-hours` | Novo. |
+| `GET /api/aircraft/{registrationNumber}` | Existe no PSOFT (`/api/hangar/aircraft/...`); passa a `/api/aircraft`. A resposta passa a incluir `maximumRangeKm` e `seatingCapacity`, necessários para validar alcance e capacidade. |
+| `GET /api/aircraft` | Existe no PSOFT; usado pela manutenção para obter a frota (alertas, US222). |
+| `PATCH /api/aircraft/{registrationNumber}/status` (disponibilidade) | Existe no PSOFT (US105); usado pela manutenção no início e fim de uma intervenção. |
+| `PATCH /api/aircraft/{registrationNumber}/flight-hours` | Novo. |
 | `GET /api/airports/{iataCode}` | Existe no PSOFT. |
 | `GET /api/maintenance/aircraft/{registrationNumber}/ongoing` | Novo; devolve se existe um `MaintenanceRecord` com estado `ONGOING`. |
 | `GET /api/flights/aircraft/{registrationNumber}` | Existe no PSOFT; usado também entre réplicas para verificar sobreposição de voos. |
@@ -73,6 +74,9 @@ Estas decisões complementam os Bounded Contexts e estão detalhadas nos diagram
 - **Réplicas:** 2 por serviço, cada uma com processo, porta e H2 próprios (portas 805x, 808x, 809x, 807x, 806x).
 - **Particionamento:** um registo vive na réplica que o criou. Os IDs gerados passam a **UUID**, para não colidirem entre réplicas. As chaves naturais (matrícula, IATA, nome do modelo) são verificadas nos peers antes da criação (409 se já existirem).
 - **Forwarding:** procura primeiro no armazenamento local. Se o dado faltar, consulta o peer com `X-Forwarded-By`, e um pedido reencaminhado nunca volta a ser reencaminhado (no máximo 1 salto). As coleções são agregadas a partir de todas as réplicas, sem duplicados.
+- **Comandos sobre um recurso existente** (por exemplo, mudar o estado de um aeroporto ou iniciar e concluir um registo de manutenção) seguem a mesma regra: são reencaminhados para a réplica que tem o recurso, que é a única que o altera.
+- **Relatórios agregados** (por exemplo, custos e inventário de peças da manutenção) leem os dados do peer num endpoint interno (`/api/maintenance/internal/**`). Este endpoint só aceita chamadas com `X-Service-Key`, nunca reencaminha e só devolve dados locais. Assim, um utilizador com acesso ao relatório obtém o resultado completo, mesmo sem acesso direto aos registos.
+- **Cópia de dados dentro do contexto:** um registo de manutenção guarda uma cópia dos dados do template (nome, tipo, componente, checklist) e do modelo da aeronave, porque o template pode estar na outra réplica e o modelo pertence a Aircraft Management.
 - **Tolerância a falhas:**
   - timeouts de 1 s para ligar e 2 s para ler;
   - 2 tentativas com 200 ms de *backoff*;
@@ -80,9 +84,11 @@ Estas decisões complementam os Bounded Contexts e estão detalhadas nos diagram
   - *failover* para a segunda réplica nas chamadas entre serviços;
   - respostas parciais assinaladas com `X-Partial-Result: true`.
 - **Consistência:** o sistema privilegia disponibilidade e tolerância a partições (AP), com consistência eventual nas leituras. A exceção é a criação de voos: exige respostas completas e é recusada com 503 se uma verificação não puder ser feita.
+- **Atualização do estado da aeronave pela manutenção:** é feita em melhor esforço. Se o `aircraft-service` não responder, o registo de manutenção muda de estado na mesma e a resposta indica-o (`aircraftSync`). A aeronave só volta a `AVAILABLE` se nenhuma réplica tiver outra manutenção em curso para ela; se não for possível confirmar isso com todas as réplicas, não é libertada.
 - **Segurança:**
   - HTTPS em todas as réplicas;
   - JWT emitido pelo `auth-service` e validado localmente por cada serviço;
+  - passwords guardadas com BCrypt; bloqueio temporário do utilizador (429) após 5 tentativas de login falhadas;
   - `X-Service-Key` nas chamadas internas;
   - RBAC por endpoint;
   - registo de auditoria (utilizador, ação, recurso, réplica, resultado).
@@ -92,6 +98,8 @@ Estas decisões complementam os Bounded Contexts e estão detalhadas nos diagram
 
 - A classe `Certification` do PSOFT não identifica um modelo de aeronave (requisito US106a). Por isso, a elegibilidade modelo–aeroporto não é validada no agendamento; só o estado operacional dos aeroportos é verificado.
 - As réplicas usam H2 em memória: se uma réplica reiniciar, os dados criados nela perdem-se, e só os dados de *bootstrap* são recriados.
+- O bloqueio por tentativas de login falhadas é mantido em memória por réplica do `auth-service`: alternando entre réplicas, um atacante tem o dobro das tentativas.
+- Se o `aircraft-service` estiver em baixo quando uma manutenção começa ou acaba, o estado da aeronave fica desatualizado até à operação seguinte.
 - Os dados não são copiados entre réplicas. Se uma réplica estiver em baixo, os registos que só ela tem ficam indisponíveis até voltar; o sistema responde com os dados das réplicas alcançáveis e assinala a resposta como parcial.
 
 ## Diagramas
@@ -99,7 +107,7 @@ Estas decisões complementam os Bounded Contexts e estão detalhadas nos diagram
 | Ficheiro | Vista |
 | --- | --- |
 | `aisafe_diagrams/aisafe_ddd_context_map.puml` | Mapa de contextos DDD |
-| `aisafe_diagrams/arquitetura.puml` | Arquitetura de containers (C4 nível 2) |
+| `../../../../Downloads/AISafe 2/docs/aisafe_diagrams/arquitetura.puml` | Arquitetura de containers (C4 nível 2) |
 | `aisafe_diagrams/aisafe_deployment_replication.puml` | Vista física: réplicas, portas, HTTPS |
-| `aisafe_diagrams/aisafe_peer_get_forwarding_sequence.puml` | Cenário: forwarding de GET e agregação, incluindo falha de peer |
-| `aisafe_diagrams/aisafe_create_scheduled_flight_sequence.puml` | Cenário: agendamento de voo entre serviços (US212) |
+| `../../../../Downloads/AISafe 2/docs/aisafe_diagrams/aisafe_peer_get_forwarding_sequence.puml` | Cenário: forwarding de GET e agregação, incluindo falha de peer |
+| `../../../../Downloads/AISafe 2/docs/aisafe_diagrams/aisafe_create_scheduled_flight_sequence.puml` | Cenário: agendamento de voo entre serviços (US212) |
