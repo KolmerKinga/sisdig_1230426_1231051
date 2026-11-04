@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
-# Stops every replica of auth, airport and maintenance (Mac / Linux).
+# Stops every replica of every AISafe service (Mac / Linux):
 # 1) the processes started by ./scripts/run-all.sh (logs/pids)
-# 2) anything still LISTENING on their ports (replicas started by hand, IntelliJ, an old run, ...)
-# aircraft-service (8081/8082) is NOT touched.
+# 2) anything still LISTENING on the AISafe ports (replicas started by hand, IntelliJ, an old run, ...)
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PIDS="$ROOT/logs/pids"
-PORTS="8051 8052 8061 8062 8091 8092"
+PORTS="8051 8052 8081 8082 8091 8092 8061 8062 8083 8084"
 
 if [ -f "$PIDS" ]; then
   while read -r pid; do
