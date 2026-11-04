@@ -1,0 +1,79 @@
+@startuml
+title Logical view - aircraft-service (Aircraft Management)\ndomain classes
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName SansSerif
+hide empty members
+
+class Aircraft <<Entity>> {
+  - registrationNumber : String
+  - version : Long
+  - model : AircraftModel
+  - status : AircraftAvailability
+  - manufacturingDate : LocalDate
+  - totalOperationalHours : Double
+  - totalFlightHours : Double
+  - meanRange : Double
+  - features : List<String>
+  - seatingPack : SeatingPack
+  - components : List<InstalledComponent>
+  - certifications : List<AircraftCertification>
+  + sendToMaintenance()
+  + activateAircraft()
+  + retireAircraft()
+  + sendAircraftInFlight()
+  + installComponent()
+  + removeComponent()
+  + addCertification()
+  + configureSeating()
+}
+enum AircraftAvailability {
+  AVAILABLE
+  IN_FLIGHT
+  MAINTENANCE
+  INACTIVE
+}
+class AircraftCertification <<Entity>> {
+  - aircraftCertificationId : Long
+  - aircraft : Aircraft
+  - name : String
+  - category : String
+  - startAt : LocalDate
+  - expiresAt : LocalDate
+}
+class AircraftModel <<Entity>> {
+  - modelName : String
+  - manufacturer : String
+  - aircraftModelSpecs : AircraftSpecs
+  - modelImages : List<String>
+  + changeManufacturer()
+  + updateSpecs()
+  + addImage()
+  + removeImage()
+}
+class AircraftSpecs <<Value Object>> {
+  - fuelCapacityLiters : Double
+  - maximumRangeKm : Double
+  - cruisingSpeedKph : Double
+  - standardSeatingCapacity : Integer
+}
+class InstalledComponent <<Entity>> {
+  - serialNumber : String
+  - partNumber : String
+  - status : String
+  - aircraft : Aircraft
+  + updateStatus()
+  + updatePartNumber()
+}
+class SeatingPack <<Value Object>> {
+  - seatingCapacity : Integer
+  - seatingOrientation : String
+}
+
+Aircraft --> "1" AircraftAvailability : status
+Aircraft *-- "*" AircraftCertification : certifications
+Aircraft "*" --> "1" AircraftModel : model
+Aircraft *-- "*" InstalledComponent : components
+Aircraft *-- "1" SeatingPack : seatingPack
+AircraftModel *-- "1" AircraftSpecs : aircraftModelSpecs
+@enduml

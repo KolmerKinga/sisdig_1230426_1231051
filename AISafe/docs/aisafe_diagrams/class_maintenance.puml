@@ -1,0 +1,79 @@
+@startuml
+title Logical view - maintenance-service (Maintenance Management)\ndomain classes
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName SansSerif
+hide empty members
+
+class ChecklistItem <<Value Object>> {
+  - task : String
+  - required : boolean
+  - done : boolean
+}
+enum MaintenanceAttribute {
+  ENGINE
+  AIRFRAME
+  AVIONICS
+  INTERIOR
+  EXTERIOR
+}
+class MaintenanceRecord <<Entity>> {
+  - id : UUID
+  - version : Long
+  - aircraftRegistration : String
+  - aircraftModel : String
+  - templateId : UUID
+  - templateName : String
+  - operation : MaintenanceType
+  - attribute : MaintenanceAttribute
+  - description : String
+  - startDate : LocalDate
+  - endDate : LocalDate
+  - durationHours : Double
+  - status : MaintenanceStatus
+  - completionNotes : String
+  - createdBy : String
+  - completedBy : String
+  - checklist : List<ChecklistItem>
+  - usedParts : List<UsedPart>
+  + start()
+  + complete()
+  + addUsedPart()
+  + changeAttribute()
+  + totalCost()
+}
+enum MaintenanceStatus {
+  INLINE
+  ONGOING
+  COMPLETED
+}
+class MaintenanceTemplate <<Entity>> {
+  - id : UUID
+  - version : Long
+  - name : String
+  - operation : MaintenanceType
+  - attribute : MaintenanceAttribute
+  - expectedDuration : Double
+  - checklist : Map<String, Boolean>
+}
+enum MaintenanceType {
+  INSPECTION
+  SCHEDULED
+  OVERHAUL
+  MODIFICATION
+}
+class UsedPart <<Value Object>> {
+  - partSerialNumber : String
+  - quantity : Integer
+  - price : Double
+  + cost()
+}
+
+MaintenanceRecord *-- "*" ChecklistItem : checklist
+MaintenanceRecord --> "1" MaintenanceAttribute : attribute
+MaintenanceRecord --> "1" MaintenanceStatus : status
+MaintenanceRecord --> "1" MaintenanceType : operation
+MaintenanceRecord *-- "*" UsedPart : usedParts
+MaintenanceTemplate --> "1" MaintenanceAttribute : attribute
+MaintenanceTemplate --> "1" MaintenanceType : operation
+@enduml

@@ -1,0 +1,73 @@
+@startuml
+title Logical view - route-flight-service (Route / Flight Operations)\ndomain classes
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName SansSerif
+hide empty members
+
+class Flight <<Entity>> {
+  - flightId : String
+  - routeId : String
+  - aircraftRegistration : String
+  - scheduledDeparture : LocalDateTime
+  - scheduledArrival : LocalDateTime
+  - status : FlightStatus
+  + startFlight()
+  + completeFlight()
+  + cancelFlight()
+  + cancel()
+  + complete()
+  + markInAir()
+  + markDelayed()
+  + updateSchedule()
+}
+enum FlightStatus {
+  SCHEDULED
+  IN_AIR
+  COMPLETED
+  CANCELLED
+  DELAYED
+}
+class Route <<Entity>> {
+  - routeId : String
+  - routeName : String
+  - type : RouteType
+  - originIata : String
+  - destinationIata : String
+  - estimatedTimeHours : Double
+  - distanceKm : Double
+  - requirements : RouteRequirements
+  - status : RouteStatus
+  + activate()
+  + activateRoute()
+  + deactivate()
+  + suspendRoute()
+  + retireRoute()
+}
+class RouteHistory <<Value Object>> {
+  - routeBegin : LocalDate
+  - routeFinish : LocalDate
+  - routeUsage : Integer
+  + endRoute()
+  + incrementUsage()
+  + updateRouteUsage()
+}
+class RouteRequirements <<Value Object>> {
+  - requiredRange : Double
+  - requiredCapacity : Integer
+}
+enum RouteStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+enum RouteType {
+  DIRECT
+  SCALED
+}
+
+Flight --> "1" FlightStatus : status
+Route *-- "1" RouteRequirements : requirements
+Route --> "1" RouteStatus : status
+Route --> "1" RouteType : type
+@enduml

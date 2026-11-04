@@ -1,0 +1,81 @@
+@startuml
+title Logical view - airport-service (Airport Management)\ndomain classes
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName SansSerif
+hide empty members
+
+class Airport <<Entity>> {
+  - iataCode : String
+  - version : Long
+  - name : String
+  - airportType : String
+  - status : AirportStatus
+  - operationalHours : String
+  - location : AirportLocation
+  - facilities : Facilities
+  - runways : List<Runway>
+  - certifications : List<Certification>
+  - contacts : List<Contact>
+  - airportPhotos : List<String>
+  + changeStatus()
+  + updateDetails()
+  + addCertification()
+}
+class AirportLocation <<Value Object>> {
+  - city : String
+  - country : String
+  - region : String
+  - timezone : String
+  - latitude : Double
+  - longitude : Double
+}
+enum AirportStatus {
+  OPERATIONAL
+  CLOSED
+  UNDER_MAINTENANCE
+}
+class Certification <<Entity>> {
+  - id : UUID
+  - name : String
+  - category : String
+  - startsAt : LocalDate
+  - expiresAt : LocalDate
+}
+class Contact <<Value Object>> {
+  - type : ContactType
+  - value : String
+}
+enum ContactType {
+  PHONE
+  EMAIL
+  FAX
+  SOCIAL_NETWORK
+}
+class Facilities <<Value Object>> {
+  - terminalCount : Integer
+  - gateCount : Integer
+  - services : List<String>
+}
+class Runway <<Entity>> {
+  - id : UUID
+  - runwayName : String
+  - length : Double
+  - orientation : String
+  - status : RunwayStatus
+}
+enum RunwayStatus {
+  OPEN
+  IN_USE
+  UNDER_MAINTENANCE
+}
+
+Airport *-- "1" AirportLocation : location
+Airport --> "1" AirportStatus : status
+Airport *-- "*" Certification : certifications
+Airport *-- "*" Contact : contacts
+Airport *-- "1" Facilities : facilities
+Airport *-- "*" Runway : runways
+Contact --> "1" ContactType : type
+Runway --> "1" RunwayStatus : status
+@enduml
